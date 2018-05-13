@@ -6,17 +6,16 @@ use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Request, State, Outcome};
 
-use std::{ops, env};
+use std::ops;
 
 /// Initializes a database pool.
 crate type ConnMgr = ConnectionManager<PgConnection>;
 crate type Pool = r2d2::Pool<ConnMgr>;
 
-crate fn init_db_pool() -> Pool {
-    let db_url = env::var("DATABASE_URL").expect("set DATABASE_URL to configure db connection");
+crate fn init_db_pool(db_url: &str) -> Pool {
     let manager = ConnectionManager::<PgConnection>::new(db_url);
     r2d2::Pool::builder()
-        .min_idle(Some(0))
+        .min_idle(Some(1))
         .build(manager)
         .expect("failed to create db pool")
 }

@@ -13,13 +13,14 @@ mod routes;
 
 // Launch the rocket
 fn main() {
-    // Load development environments
+    // Load development environments and env vars
     let _ = dotenv::dotenv();
+    let db_url = std::env::var("DATABASE_URL").expect("set DATABASE_URL to configure db connection");
 
     rocket::ignite()
+        .manage(db::init_db_pool(db_url.as_str()))
         // TODO: Use Template::custom once rocket 0.4 is released, then we can e.g.
         // call `handlebars.set_strict_mode`.
-        .manage(db::init_db_pool())
         .attach(rocket_contrib::Template::fairing())
         .mount("/", routes::routes())
         .launch();
