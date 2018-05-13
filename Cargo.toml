@@ -6,6 +6,9 @@ authors = ["Ralf Jung <post@ralfj.de>"]
 [dependencies]
 rocket = "0.3.10"
 rocket_codegen = "0.3.10"
+diesel = { version = "1.2.2", features = ["postgres"] }
+r2d2 = "0.8.2"
+r2d2-diesel = "1.0.0"
 
 [dependencies.rocket_contrib]
 version = "*"
