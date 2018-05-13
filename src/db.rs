@@ -13,7 +13,7 @@ crate type ConnMgr = ConnectionManager<PgConnection>;
 crate type Pool = r2d2::Pool<ConnMgr>;
 
 crate fn init_db_pool(db_url: &str) -> Pool {
-    let manager = ConnectionManager::<PgConnection>::new(db_url);
+    let manager = ConnMgr::new(db_url);
     r2d2::Pool::builder()
         .min_idle(Some(1))
         .build(manager)
