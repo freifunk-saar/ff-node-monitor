@@ -1,4 +1,15 @@
-{{> partials/page title="Test" }}
-{{#*inline "page"}}
-  My Content
-{{/inline}}
+{{~#*inline "title"~}}
+  Freifunk Saar Knotenüberwachung
+{{~/inline~}}
+{{~#*inline "page"}}
+<p>
+  Willkommen bei der <b>Freifunk Saar Knotenüberwachung</b>!
+  Dieser Dienst überwach kontinuierlich den Status aller Knoten.
+  Du kannst dich registrieren, um per E-Mail über Statusänderungen informiert zu werden, zum Beispiel wenn ein Knoten offline geht.
+</p>
+<form method="get" action="list">
+  E-Mail-Adresse: <input type="text" name="email"><br>
+  <input type="submit" value="Knoten überwachen">
+</form>
+{{~/inline}}
+{{~> partials/page }}

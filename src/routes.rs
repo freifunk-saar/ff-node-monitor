@@ -1,17 +1,23 @@
 use rocket_contrib::Template;
+use rocket::request::FromForm;
 
-use db;
-
-#[get("/<foo>")]
-fn ff(foo: u32) -> String {
-    format!("Hello, world! {}", foo)
-}
+use db_conn::DbConn;
 
 #[get("/")]
-fn index(_conn: db::Conn) -> Template {
+fn index() -> Template {
     Template::render("index", &())
 }
 
+#[derive(FromForm)]
+struct ListForm {
+    email: String,
+}
+
+#[get("/list?<form>")]
+fn list(form: ListForm) -> Template {
+    Template::render("list", &json!({"email": form.email}))
+}
+
 pub fn routes() -> Vec<::rocket::Route> {
-    routes![ff, index]
+    routes![index, list]
 }

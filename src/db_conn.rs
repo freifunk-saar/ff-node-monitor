@@ -29,25 +29,25 @@ crate fn init_db_pool(db_url: &str) -> Pool {
 }
 
 // Connection request guard type: a wrapper around an r2d2 pooled connection.
-pub struct Conn(pub r2d2::PooledConnection<ConnMgr>);
+pub struct DbConn(pub r2d2::PooledConnection<ConnMgr>);
 
 /// Attempts to retrieve a single connection from the managed database pool. If
 /// no pool is currently managed, fails with an `InternalServerError` status. If
 /// no connections are available, fails with a `ServiceUnavailable` status.
-impl<'a, 'r> FromRequest<'a, 'r> for Conn {
+impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Conn, ()> {
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<DbConn, ()> {
         let pool = request.guard::<State<Pool>>()?;
         match pool.get() {
-            Ok(conn) => Outcome::Success(Conn(conn)),
+            Ok(conn) => Outcome::Success(DbConn(conn)),
             Err(_) => Outcome::Failure((Status::ServiceUnavailable, ()))
         }
     }
 }
 
 // For the convenience of using an &DbConn as an &PgConnection.
-impl ops::Deref for Conn {
+impl ops::Deref for DbConn {
     type Target = PgConnection;
 
     fn deref(&self) -> &Self::Target {
