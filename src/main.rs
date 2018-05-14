@@ -8,9 +8,14 @@ extern crate r2d2_diesel;
 extern crate diesel;
 extern crate diesel_migrations;
 extern crate dotenv;
+extern crate ring;
+extern crate serde;
+#[macro_use] extern crate serde_derive;
+extern crate rmp_serde as rmps;
 
 mod db;
 mod routes;
+mod action;
 
 fn main() {
     // Load development environments and env vars
