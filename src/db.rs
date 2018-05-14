@@ -1,6 +1,8 @@
 use r2d2;
 use r2d2_diesel::ConnectionManager;
+use diesel::prelude::*;
 use diesel::pg::PgConnection;
+use diesel_migrations;
 
 use rocket::http::Status;
 use rocket::request::{self, FromRequest};
@@ -13,6 +15,12 @@ crate type ConnMgr = ConnectionManager<PgConnection>;
 crate type Pool = r2d2::Pool<ConnMgr>;
 
 crate fn init_db_pool(db_url: &str) -> Pool {
+    // Run diesel migrations
+    let conn = PgConnection::establish(db_url)
+        .expect("failed to connect to db");
+    diesel_migrations::run_pending_migrations(&conn)
+        .expect("failed to run migrations");
+    // Create the pool
     let manager = ConnMgr::new(db_url);
     r2d2::Pool::builder()
         .min_idle(Some(1))
