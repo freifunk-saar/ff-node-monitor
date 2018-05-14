@@ -13,10 +13,13 @@ extern crate serde;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate serde_json;
 extern crate rmp_serde as rmps;
+#[macro_use] extern crate failure;
 
 mod db_conn;
 mod routes;
 mod action;
+mod models;
+mod schema;
 
 fn main() {
     // Load development environments and env vars

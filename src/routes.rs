@@ -1,7 +1,9 @@
 use rocket_contrib::Template;
-use rocket::request::FromForm;
+use diesel::prelude::*;
+use failure::Error;
 
 use db_conn::DbConn;
+use models::*;
 
 #[get("/")]
 fn index() -> Template {
@@ -14,8 +16,13 @@ struct ListForm {
 }
 
 #[get("/list?<form>")]
-fn list(form: ListForm) -> Template {
-    Template::render("list", &json!({"email": form.email}))
+fn list(form: ListForm, db: DbConn) -> Result<Template, Error> {
+    use schema::monitors::dsl::*;
+
+    let nodes = monitors
+        .filter(email.eq(form.email.as_str()))
+        .load::<Monitor>(&*db)?;
+    Ok(Template::render("list", &json!({"email": form.email})))
 }
 
 pub fn routes() -> Vec<::rocket::Route> {
