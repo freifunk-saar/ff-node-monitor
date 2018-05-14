@@ -13,7 +13,8 @@ extern crate serde;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate serde_json;
 extern crate rmp_serde as rmps;
-#[macro_use] extern crate failure;
+extern crate failure;
+extern crate url;
 
 mod db_conn;
 mod routes;

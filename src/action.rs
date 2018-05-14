@@ -1,11 +1,32 @@
+use rocket::request::FromFormValue;
+use rocket::http::RawStr;
+
 use ring::{digest, hmac, error};
 use rmps::to_vec;
 
 #[derive(Serialize)]
+pub enum Operation {
+    Add,
+    Remove,
+}
+
+impl<'v> FromFormValue<'v> for Operation {
+    type Error = &'v RawStr;
+
+    fn from_form_value(v: &'v RawStr) -> Result<Self, Self::Error> {
+        match v.as_str() {
+            "add" => Ok(Operation::Add),
+            "remove" => Ok(Operation::Remove),
+            _ => Err(v),
+        }
+    }
+}
+
+#[derive(Serialize, FromForm)]
 pub struct Action {
-    node: String,
-    mail: String,
-    add: bool, // false = remove
+    pub node: String,
+    pub email: String,
+    pub op: Operation,
 }
 
 impl Action {
