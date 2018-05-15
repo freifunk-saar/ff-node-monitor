@@ -4,7 +4,7 @@
 {{~#*inline "page"}}
   <p>
     {{#each nodes}}
-    <span class="node" data-node-id="{{this.node}}">{{this.node}}</span> <a href="action?email={{form.email}}&amp;node={{this.node}}&amp;op=remove">[x]</a><br>
+    <span class="node" data-node-id="{{this.node}}">{{this.node}}</span> <a href="prepare_action?email={{form.email}}&amp;node={{this.node}}&amp;op=remove">[x]</a><br>
     {{else}}
     Du überwachst bisher keinen Knoten.
     {{/each}}
