@@ -3,6 +3,8 @@ use rocket::State;
 
 use diesel::prelude::*;
 use failure::Error;
+use lettre::{EmailTransport, SmtpTransport};
+use lettre_email::EmailBuilder;
 
 use db_conn::DbConn;
 use models::*;
@@ -31,9 +33,21 @@ fn list(form: ListForm, db: DbConn) -> Result<Template, Error> {
 }
 
 #[get("/prepare_action?<action>")]
-fn prepare_action(action: Action) -> Result<Template, Error> {
-    // TODO: send email
+fn prepare_action(action: Action, config: State<Config>) -> Result<Template, Error> {
+    // Build email
     //let url = url_with_query("list".to_owned(), &[("email", action.email.as_str())]);
+    let email = EmailBuilder::new()
+        // Addresses can be specified by the tuple (email, alias)
+        .to(action.email.as_str())
+        // ... or by an address only
+        .from(config.email_from.as_str())
+        .subject("Hi, Hello world")
+        .text("Hello world.")
+        .build()?;
+    // Send email
+    let mut mailer = SmtpTransport::builder_unencrypted_localhost()?.build();
+    mailer.send(&email)?;
+
     Ok(Template::render("prepare_action", &json!({"action": action})))
 }
 

@@ -15,6 +15,8 @@ extern crate rmp_serde as rmps;
 extern crate failure;
 extern crate url;
 extern crate toml;
+extern crate lettre;
+extern crate lettre_email;
 
 #[macro_use] mod serde_enum_number;
 mod db_conn;
