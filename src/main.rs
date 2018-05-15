@@ -16,11 +16,13 @@ extern crate rmp_serde as rmps;
 extern crate failure;
 extern crate url;
 
+#[macro_use] mod serde_enum_number;
 mod db_conn;
 mod routes;
 mod action;
 mod models;
 mod schema;
+mod util;
 
 fn main() {
     // Load development environments and env vars

@@ -1,19 +1,19 @@
 {{~#*inline "title"~}}
-  Knotenliste für {{email}}
+  Knotenliste für {{form.email}}
 {{~/inline~}}
 {{~#*inline "page"}}
   <p>
     {{#each nodes}}
-    <span class="node" data-node-id="{{this.node}}">{{this.node}}</span> <a href="action?email={{email}}&amp;node={{this.node}}&amp;op=remove">[x]</a><br>
+    <span class="node" data-node-id="{{this.node}}">{{this.node}}</span> <a href="action?email={{form.email}}&amp;node={{this.node}}&amp;op=remove">[x]</a><br>
     {{else}}
     Du überwachst bisher keinen Knoten.
     {{/each}}
   </p>
-  <form method="get" action="action">
-  <input type="hidden" name="email" value="{{email}}">
-  <input type="hidden" name="op" value="add">
-  Knoten ID: <input type="text" name="node"><br>
-  <input type="submit" value="Knoten hinzufügen">
-</form>
+  <form method="get" action="prepare_action">
+    <input type="hidden" name="email" value="{{form.email}}">
+    <input type="hidden" name="op" value="add">
+    Knoten ID: <input type="text" name="node"><br>
+    <input type="submit" value="Knoten hinzufügen">
+  </form>
 {{~/inline}}
 {{~> partials/page }}

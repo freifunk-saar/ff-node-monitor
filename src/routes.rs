@@ -1,20 +1,19 @@
 use rocket_contrib::Template;
-use rocket::response;
 
 use diesel::prelude::*;
 use failure::Error;
-use url::form_urlencoded;
 
 use db_conn::DbConn;
 use models::*;
 use action::*;
+use util::url_with_query;
 
 #[get("/")]
 fn index() -> Template {
     Template::render("index", &())
 }
 
-#[derive(FromForm)]
+#[derive(Serialize,FromForm)]
 struct ListForm {
     email: String,
 }
@@ -26,23 +25,16 @@ fn list(form: ListForm, db: DbConn) -> Result<Template, Error> {
     let nodes = monitors
         .filter(email.eq(form.email.as_str()))
         .load::<Monitor>(&*db)?;
-    Ok(Template::render("list", &json!({"email": form.email, "nodes": nodes})))
+    Ok(Template::render("list", &json!({"form": form, "nodes": nodes})))
 }
 
-fn list_url(email: &str) -> String {
-    let mut to_url = "list?".to_string();
-    let len = to_url.len();
-    form_urlencoded::Serializer::for_suffix(&mut to_url, len)
-        .append_pair("email", email);
-    to_url
-}
-
-#[get("/action?<action>")]
-fn action(action: Action) -> Result<response::Redirect, Error> {
+#[get("/prepare_action?<action>")]
+fn prepare_action(action: Action) -> Result<Template, Error> {
     // TODO: send email
-    Ok(response::Redirect::to(list_url(action.email.as_str()).as_str()))
+    //let url = url_with_query("list".to_owned(), &[("email", action.email.as_str())]);
+    Ok(Template::render("prepare_action", &json!({"action": action})))
 }
 
 pub fn routes() -> Vec<::rocket::Route> {
-    routes![index, list, action]
+    routes![index, list, prepare_action]
 }

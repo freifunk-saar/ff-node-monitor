@@ -4,11 +4,10 @@ use rocket::http::RawStr;
 use ring::{digest, hmac, error};
 use rmps::to_vec;
 
-#[derive(Serialize)]
-pub enum Operation {
-    Add,
-    Remove,
-}
+enum_number!(Operation {
+    Add = 1,
+    Remove = 0,
+});
 
 impl<'v> FromFormValue<'v> for Operation {
     type Error = &'v RawStr;
