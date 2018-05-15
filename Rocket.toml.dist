@@ -1,4 +1,4 @@
 [global.ff-node-monitor]
-instance_name = "Freifunk ???? Knotenüberwachung"
+instance_name = "Freifunk ????"
 root_url = "https://????/"
 email_from = "noreply@???"

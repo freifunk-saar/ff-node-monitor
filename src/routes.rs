@@ -1,4 +1,5 @@
 use rocket_contrib::Template;
+use rocket::State;
 
 use diesel::prelude::*;
 use failure::Error;
@@ -6,11 +7,12 @@ use failure::Error;
 use db_conn::DbConn;
 use models::*;
 use action::*;
+use config::Config;
 use util::url_with_query;
 
 #[get("/")]
-fn index() -> Template {
-    Template::render("index", &())
+fn index(config: State<Config>) -> Template {
+    Template::render("index", &json!({"config": &*config}))
 }
 
 #[derive(Serialize,FromForm)]
