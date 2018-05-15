@@ -2,3 +2,4 @@
 instance_name = "Freifunk ????"
 root_url = "https://????/"
 email_from = "noreply@???"
+postgres_url = "postgres://..."
