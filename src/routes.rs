@@ -77,8 +77,12 @@ struct RunActionForm {
 }
 
 #[get("/run_action?<form>")]
-fn run_action(form: RunActionForm, db: DbConn) -> Result<Template, Error> {
-    unimplemented!()
+fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<Template, Error> {
+    let signed_action = base64::decode(form.signed_action.as_str())?;
+    let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
+    let action = signed_action.verify(config.action_signing_key.as_slice())?;
+
+    Ok(Template::render("run_action", &json!({"action": action})))
 }
 
 pub fn routes() -> Vec<::rocket::Route> {

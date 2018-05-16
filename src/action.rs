@@ -44,9 +44,9 @@ impl Action {
     }
 
     fn verify_signature(&self, key: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
-        let key = hmac::VerificationKey::new(&digest::SHA256, key);
+        let key = hmac::SigningKey::new(&digest::SHA256, key);
         let buf = serialize_to_vec(self).expect("failed to encode Action");
-        hmac::verify(&key, buf.as_slice(), signature)
+        hmac::verify_with_own_key(&key, buf.as_slice(), signature)
     }
 
     pub fn sign(self, key: &[u8]) -> SignedAction {

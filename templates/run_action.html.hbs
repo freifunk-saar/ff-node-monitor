@@ -1,0 +1,14 @@
+{{~#*inline "title"~}}
+  Knotenüberwachung für {{action.email}}
+{{~/inline~}}
+{{~#*inline "page"}}
+  <p>
+    <b>{{action.node}}</b> wird jetzt von <b>{{action.email}}</b>
+      {{#if action.op }}
+      überwacht.
+      {{else}}
+      nicht mehr überwacht.
+      {{/if}}
+  </p>
+{{~/inline}}
+{{~> partials/page }}
