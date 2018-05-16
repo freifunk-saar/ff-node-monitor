@@ -33,10 +33,10 @@ fn list(form: ListForm, db: DbConn) -> Result<Template, Error> {
 }
 
 #[get("/prepare_action?<action>")]
-fn prepare_action<'a, 'r>(
+fn prepare_action(
     action: Action,
     config: State<Config>,
-    req: Request<'a, 'r>,
+    req: Request,
 ) -> Result<Template, Error>
 {
     // Generate email text. First line is user-visible sender, 2nd line subject.
