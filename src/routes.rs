@@ -40,9 +40,10 @@ fn prepare_action<'a, 'r>(
 ) -> Result<Template, Error>
 {
     // Generate email text. First line is user-visible sender, 2nd line subject.
-    let mut url = config.root_url.join("list")?;
+    let mut url = config.root_url.join("run_action")?;
     url.query_pairs_mut()
-        .append_pair("email", action.email.as_str());
+        .append_pair("email", action.email.as_str())
+        .append_pair("node", action.node.as_str());
     let email_template = Template::render("confirm_action",
         &json!({"action": action, "config": &*config, "url": url.as_str()}));
     let email_text = req.responder_body(email_template)?;
