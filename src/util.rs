@@ -10,6 +10,24 @@ use failure::Error;
 
 use std::ops;
 
+/// Module for serde "with" to use hex encoding to byte arrays
+pub mod hex_bytes {
+    use hex;
+    use serde::{Serializer, Deserializer, Deserialize, de::Error};
+
+    pub fn serialize<S>(bytes: &Vec<u8>, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        serializer.serialize_str(hex::encode(bytes).as_str())
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+        where D: Deserializer<'de>
+    {
+         Ok(hex::decode(String::deserialize(deserializer)?).map_err(|e| Error::custom(e))?)
+    }
+}
+
 /// Horribly hacky hack to get access to the Request, and then a template's body
 pub struct Request<'a, 'r: 'a>(&'a Req<'r>);
 

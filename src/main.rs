@@ -11,13 +11,15 @@ extern crate ring;
 extern crate serde;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate serde_json;
-extern crate rmp_serde as rmps;
+extern crate rmp_serde;
 #[macro_use] extern crate failure;
 extern crate url;
 extern crate url_serde;
 extern crate toml;
 extern crate lettre;
 extern crate lettre_email;
+extern crate base64;
+extern crate hex;
 
 #[macro_use] mod serde_enum_number;
 mod db_conn;

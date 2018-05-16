@@ -8,6 +8,7 @@ use serde::Deserialize;
 use serde::de::IntoDeserializer;
 
 use db_conn;
+use util;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -16,6 +17,8 @@ pub struct Config {
     pub root_url: Url,
     pub email_from: String,
     pub postgres_url: String,
+    #[serde(with = "util::hex_bytes")]
+    pub action_signing_key: Vec<u8>,
 }
 
 impl Config {
