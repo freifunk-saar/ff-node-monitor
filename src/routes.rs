@@ -2,6 +2,7 @@ use rocket_contrib::Template;
 use rocket::State;
 
 use diesel::prelude::*;
+use diesel;
 use failure::Error;
 use lettre::{EmailTransport, SmtpTransport};
 use lettre_email::EmailBuilder;
@@ -78,11 +79,40 @@ struct RunActionForm {
 
 #[get("/run_action?<form>")]
 fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<Template, Error> {
+    use schema::monitors;
+
+    // Determine and verify action
     let signed_action = base64::decode(form.signed_action.as_str())?;
     let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
     let action = signed_action.verify(config.action_signing_key.as_slice())?;
 
-    Ok(Template::render("run_action", &json!({"action": action})))
+    // Execute action
+    match action.op {
+        Operation::Add => {
+            // TODO: Check if the node ID even exists
+            // TODO: What if the node is already monitored by this email?
+            let m = NewMonitor { node: action.node.as_str(), email: action.email.as_str() };
+            diesel::insert_into(monitors::table)
+                .values(&m)
+                .execute(&*db)?;
+        }
+        Operation::Remove => {
+            use schema::monitors::dsl::*;
+
+            let rows = monitors
+                .filter(node.eq(action.node.as_str()))
+                .filter(email.eq(action.email.as_str()));
+            let _num_deleted = diesel::delete(rows)
+                .execute(&*db)?;
+            // TODO: Do something with num_deleted
+        }
+    }
+
+    // Render
+    let mut url = config.root_url.join("list")?;
+    url.query_pairs_mut()
+        .append_pair("email", action.email.as_str());
+    Ok(Template::render("run_action", &json!({"action": action, "list_url": url.as_str()})))
 }
 
 pub fn routes() -> Vec<::rocket::Route> {

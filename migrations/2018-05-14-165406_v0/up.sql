@@ -8,5 +8,6 @@ ALTER TABLE monitors ADD PRIMARY KEY (node, email);
 CREATE TABLE nodes
 (
   node character varying NOT NULL PRIMARY KEY,
-  state bit(1) NOT NULL
+  name character varying NOT NULL,
+  state boolean NOT NULL
 );

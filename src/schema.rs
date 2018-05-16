@@ -8,7 +8,8 @@ table! {
 table! {
     nodes (node) {
         node -> Varchar,
-        state -> Bit,
+        name -> Varchar,
+        state -> Bool,
     }
 }
 
