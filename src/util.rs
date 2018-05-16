@@ -8,6 +8,8 @@ use rocket::{
 
 use failure::Error;
 
+use std::ops;
+
 /// Horribly hacky hack to get access to the Request, and then a template's body
 pub struct Request<'a, 'r: 'a>(&'a Req<'r>);
 
@@ -33,5 +35,13 @@ impl<'a, 'r> FromRequest<'a, 'r> for Request<'a, 'r> {
     type Error = ();
     fn from_request(request: &'a Req<'r>) -> ReqOutcome<Self, Self::Error> {
         Outcome::Success(Request(request))
+    }
+}
+
+impl<'a, 'r> ops::Deref for Request<'a, 'r> {
+    type Target = Req<'r>;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.0
     }
 }
