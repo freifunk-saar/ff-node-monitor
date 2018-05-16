@@ -2,6 +2,8 @@ use rocket;
 use rocket::fairing::{Fairing, AdHoc};
 
 use toml;
+use url::Url;
+use url_serde;
 use serde::Deserialize;
 use serde::de::IntoDeserializer;
 
@@ -10,7 +12,8 @@ use db_conn;
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub instance_name: String,
-    pub root_url: String,
+    #[serde(with = "url_serde")]
+    pub root_url: Url,
     pub email_from: String,
     pub postgres_url: String,
 }

@@ -14,6 +14,7 @@ extern crate serde;
 extern crate rmp_serde as rmps;
 #[macro_use] extern crate failure;
 extern crate url;
+extern crate url_serde;
 extern crate toml;
 extern crate lettre;
 extern crate lettre_email;
