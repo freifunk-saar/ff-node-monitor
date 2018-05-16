@@ -80,6 +80,7 @@ struct RunActionForm {
 #[get("/run_action?<form>")]
 fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<Template, Error> {
     use schema::monitors;
+    use diesel::result::{Error, DatabaseErrorKind};
 
     // Determine and verify action
     let signed_action = base64::decode(form.signed_action.as_str())?;
@@ -87,14 +88,19 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     let action = signed_action.verify(config.action_signing_key.as_slice())?;
 
     // Execute action
-    match action.op {
+    let success = match action.op {
         Operation::Add => {
             // TODO: Check if the node ID even exists
-            // TODO: What if the node is already monitored by this email?
             let m = NewMonitor { node: action.node.as_str(), email: action.email.as_str() };
-            diesel::insert_into(monitors::table)
+            let r = diesel::insert_into(monitors::table)
                 .values(&m)
-                .execute(&*db)?;
+                .execute(&*db);
+            // Handle UniqueViolation gracefully
+            match r {
+                Ok(_) => true,
+                Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
+                Err(e) => Err(e)?,
+            }
         }
         Operation::Remove => {
             use schema::monitors::dsl::*;
@@ -102,17 +108,21 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
             let rows = monitors
                 .filter(node.eq(action.node.as_str()))
                 .filter(email.eq(action.email.as_str()));
-            let _num_deleted = diesel::delete(rows)
+            let num_deleted = diesel::delete(rows)
                 .execute(&*db)?;
-            // TODO: Do something with num_deleted
+            num_deleted > 0
         }
-    }
+    };
 
     // Render
     let mut url = config.root_url.join("list")?;
     url.query_pairs_mut()
         .append_pair("email", action.email.as_str());
-    Ok(Template::render("run_action", &json!({"action": action, "list_url": url.as_str()})))
+    Ok(Template::render("run_action", &json!({
+        "action": action,
+        "list_url": url.as_str(),
+        "success": success}
+    )))
 }
 
 pub fn routes() -> Vec<::rocket::Route> {

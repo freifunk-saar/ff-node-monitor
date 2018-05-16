@@ -1,6 +1,6 @@
 use schema::*;
 
-#[derive(Queryable, Insertable, Serialize)]
+#[derive(Queryable, Serialize)]
 pub struct Monitor {
     pub node: String,
     pub email: String,

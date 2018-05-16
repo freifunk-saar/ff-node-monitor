@@ -3,12 +3,14 @@
 {{~/inline~}}
 {{~#*inline "page"}}
   <p>
+  {{#if success}}
     <b>{{action.node}}</b> wird jetzt von <b>{{action.email}}</b>
-      {{#if action.op }}
-      überwacht.
-      {{else}}
-      nicht mehr überwacht.
-      {{/if}}
+    {{#if action.op}}überwacht.{{else}}nicht mehr überwacht.{{/if}}
+  {{else}}
+    <b>{{action.node}}</b> wurde
+    {{#if action.op}}schon{{else}}nicht{{/if}}
+    von <b>{{action.email}}</b> überwacht, es hat sich also nichts geändert.
+  {{/if}}
   </p>
   <p>
     <a href="{{list_url}}">Zurück zur Knotenliste</a>
