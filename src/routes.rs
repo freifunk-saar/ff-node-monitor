@@ -70,7 +70,14 @@ fn prepare_action(
     let mut mailer = SmtpTransport::builder_unencrypted_localhost()?.build();
     mailer.send(&email)?;
 
-    Ok(Template::render("prepare_action", &json!({"action": action})))
+    // Render
+    let mut url = config.urls.root_url.join("list")?;
+    url.query_pairs_mut()
+        .append_pair("email", action.email.as_str());
+    Ok(Template::render("prepare_action", &json!({
+        "action": action,
+        "list_url": url.as_str(),
+    })))
 }
 
 #[derive(Serialize, FromForm)]
@@ -122,8 +129,8 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     Ok(Template::render("run_action", &json!({
         "action": action,
         "list_url": url.as_str(),
-        "success": success}
-    )))
+        "success": success,
+    })))
 }
 
 #[get("/cron")]

@@ -15,10 +15,38 @@ enum NodeListError {
     },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize, Debug)]
+struct NodeInfo {
+    node_id: String,
+    hostname: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct Flags {
+    online: bool,
+}
+
+#[derive(Deserialize, Debug)]
+struct Statistics {
+    memory_usage: Option<f64>,
+    rootfs_usage: Option<f64>,
+    loadavg: Option<f64>,
+    clients: Option<usize>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Node {
+    nodeinfo: NodeInfo,
+    flags: Flags,
+    statistics: Statistics,
+    lastseen: DateTime<Utc>,
+    firstseen: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Debug)]
 struct Nodes {
     version: usize,
-    nodes: Vec<Value>,
+    nodes: Vec<Node>,
     timestamp: DateTime<Utc>,
 }
 
@@ -31,7 +59,7 @@ pub fn update_nodes(db: &PgConnection, config: &config::Config) -> Result<(), Er
         Err(NodeListError::UnsupportedVersion { version: nodes.version })?;
     }
 
-    println!("{}", nodes.nodes.len());
+    println!("{:#?}", nodes.nodes);
 
     Ok(())
 }
