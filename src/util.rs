@@ -11,20 +11,16 @@ use failure::Error;
 use std::ops;
 
 /// Module for serde "with" to use hex encoding to byte arrays
-pub mod hex_bytes {
+pub mod hex_signing_key {
     use hex;
-    use serde::{Serializer, Deserializer, Deserialize, de::Error};
+    use serde::{Deserializer, Deserialize, de::Error};
+    use ring::{digest, hmac};
 
-    pub fn serialize<S>(bytes: &Vec<u8>, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer
-    {
-        serializer.serialize_str(hex::encode(bytes).as_str())
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<hmac::SigningKey, D::Error>
         where D: Deserializer<'de>
     {
-         Ok(hex::decode(String::deserialize(deserializer)?).map_err(|e| Error::custom(e))?)
+         let bytes = hex::decode(String::deserialize(deserializer)?).map_err(|e| Error::custom(e))?;
+         Ok(hmac::SigningKey::new(&digest::SHA256, bytes.as_slice()))
     }
 }
 

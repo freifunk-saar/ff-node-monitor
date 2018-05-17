@@ -1,7 +1,7 @@
 use rocket::request::FromFormValue;
 use rocket::http::RawStr;
 
-use ring::{digest, hmac, error};
+use ring::{hmac, error};
 
 use rmp_serde::to_vec as serialize_to_vec;
 
@@ -36,20 +36,22 @@ pub struct SignedAction {
 }
 
 impl Action {
-    fn compute_signature(&self, key: &[u8]) -> hmac::Signature {
-        let key = hmac::SigningKey::new(&digest::SHA256, key);
+    fn compute_signature(&self, key: &hmac::SigningKey) -> hmac::Signature {
         let buf = serialize_to_vec(self).expect("failed to encode Action");
         let signature = hmac::sign(&key, buf.as_slice());
         signature
     }
 
-    fn verify_signature(&self, key: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
-        let key = hmac::SigningKey::new(&digest::SHA256, key);
+    fn verify_signature(
+        &self,
+        key: &hmac::SigningKey,
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified> {
         let buf = serialize_to_vec(self).expect("failed to encode Action");
         hmac::verify_with_own_key(&key, buf.as_slice(), signature)
     }
 
-    pub fn sign(self, key: &[u8]) -> SignedAction {
+    pub fn sign(self, key: &hmac::SigningKey) -> SignedAction {
         let signature = self.compute_signature(key);
         let signature = signature.as_ref().to_vec().into_boxed_slice();
         SignedAction { action: self, signature }
@@ -57,7 +59,7 @@ impl Action {
 }
 
 impl SignedAction {
-    pub fn verify(self, key: &[u8]) -> Result<Action, error::Unspecified> {
+    pub fn verify(self, key: &hmac::SigningKey) -> Result<Action, error::Unspecified> {
         // Using a match to make it really clear we don't return the action in case of failure
         match self.action.verify_signature(key, &*self.signature) {
             Ok(_) => Ok(self.action),

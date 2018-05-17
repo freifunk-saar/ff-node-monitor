@@ -6,19 +6,30 @@ use url::Url;
 use url_serde;
 use serde::Deserialize;
 use serde::de::IntoDeserializer;
+use ring::hmac;
 
 use db_conn;
 use util;
 
 #[derive(Serialize, Deserialize)]
-pub struct Config {
+pub struct Ui {
     pub instance_name: String,
     #[serde(with = "url_serde")]
     pub root_url: Url,
     pub email_from: String,
+}
+
+#[derive(Deserialize)]
+pub struct Secrets {
     pub postgres_url: String,
-    #[serde(with = "util::hex_bytes")]
-    pub action_signing_key: Vec<u8>,
+    #[serde(with = "util::hex_signing_key")]
+    pub action_signing_key: hmac::SigningKey,
+}
+
+#[derive(Deserialize)]
+pub struct Config {
+    pub ui: Ui,
+    pub secrets: Secrets,
 }
 
 impl Config {
@@ -38,7 +49,7 @@ pub fn fairing(section: &'static str) -> impl Fairing {
             Config::new(config_table)
         };
         Ok(rocket
-            .manage(db_conn::init_db_pool(config.postgres_url.as_str()))
+            .manage(db_conn::init_db_pool(config.secrets.postgres_url.as_str()))
             .manage(config))
     })
 }

@@ -18,7 +18,7 @@ use util::Request;
 
 #[get("/")]
 fn index(config: State<Config>) -> Template {
-    Template::render("index", &json!({"config": &*config}))
+    Template::render("index", &json!({"config": &config.ui}))
 }
 
 #[derive(Serialize, FromForm)]
@@ -44,16 +44,16 @@ fn prepare_action(
 ) -> Result<Template, Error>
 {
     // obtain bytes for signed action payload
-    let signed_action = action.clone().sign(config.action_signing_key.as_slice());
+    let signed_action = action.clone().sign(&config.secrets.action_signing_key);
     let signed_action = serialize_to_vec(&signed_action)?;
     let signed_action = base64::encode(&signed_action);
 
     // Generate email text. First line is user-visible sender, 2nd line subject.
-    let mut url = config.root_url.join("run_action")?;
+    let mut url = config.ui.root_url.join("run_action")?;
     url.query_pairs_mut()
         .append_pair("signed_action", signed_action.as_str());
     let email_template = Template::render("confirm_action",
-        &json!({"action": action, "config": &*config, "url": url.as_str()}));
+        &json!({"action": action, "config": &config.ui, "url": url.as_str()}));
     let email_text = req.responder_body(email_template)?;
     let email_parts : Vec<&str> = email_text.splitn(3, '\n').collect();
     let (email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2]);
@@ -61,7 +61,7 @@ fn prepare_action(
     // Build email
     let email = EmailBuilder::new()
         .to(action.email.as_str())
-        .from((config.email_from.as_str(), email_from))
+        .from((config.ui.email_from.as_str(), email_from))
         .subject(email_subject)
         .text(email_body)
         .build()?;
@@ -85,7 +85,7 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     // Determine and verify action
     let signed_action = base64::decode(form.signed_action.as_str())?;
     let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
-    let action = signed_action.verify(config.action_signing_key.as_slice())?;
+    let action = signed_action.verify(&config.secrets.action_signing_key)?;
 
     // Execute action
     let success = match action.op {
@@ -115,7 +115,7 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     };
 
     // Render
-    let mut url = config.root_url.join("list")?;
+    let mut url = config.ui.root_url.join("list")?;
     url.query_pairs_mut()
         .append_pair("email", action.email.as_str());
     Ok(Template::render("run_action", &json!({
