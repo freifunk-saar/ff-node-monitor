@@ -15,6 +15,7 @@ use models::*;
 use action::*;
 use config::Config;
 use util::Request;
+use cron;
 
 #[get("/")]
 fn index(config: State<Config>) -> Template {
@@ -49,7 +50,7 @@ fn prepare_action(
     let signed_action = base64::encode(&signed_action);
 
     // Generate email text. First line is user-visible sender, 2nd line subject.
-    let mut url = config.ui.root_url.join("run_action")?;
+    let mut url = config.urls.root_url.join("run_action")?;
     url.query_pairs_mut()
         .append_pair("signed_action", signed_action.as_str());
     let email_template = Template::render("confirm_action",
@@ -115,7 +116,7 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     };
 
     // Render
-    let mut url = config.ui.root_url.join("list")?;
+    let mut url = config.urls.root_url.join("list")?;
     url.query_pairs_mut()
         .append_pair("email", action.email.as_str());
     Ok(Template::render("run_action", &json!({
@@ -125,6 +126,12 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     )))
 }
 
+#[get("/cron")]
+fn cron(db: DbConn, config: State<Config>) -> Result<(), Error> {
+    cron::update_nodes(&*db, &*config)?;
+    Ok(())
+}
+
 pub fn routes() -> Vec<::rocket::Route> {
-    routes![index, list, prepare_action, run_action]
+    routes![index, list, prepare_action, run_action, cron]
 }

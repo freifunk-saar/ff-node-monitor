@@ -1,6 +1,11 @@
-[global.ff-node-monitor]
-instance_name = "Freifunk ????"
-root_url = "https://????/"
-email_from = "noreply@???"
+[global.ff-node-monitor.ui]
+instance_name = "Freifunk ..."
+email_from = "...@...freifunk.net"
+
+[global.ff-node-monitor.urls]
+root_url = "https://..."
+nodes_url = "https://..."
+
+[global.ff-node-monitor.secrets]
 postgres_url = "postgres://..."
-action_signing_key = "0123456789abcdef"
+action_signing_key = "..."

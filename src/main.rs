@@ -20,6 +20,8 @@ extern crate lettre;
 extern crate lettre_email;
 extern crate base64;
 extern crate hex;
+extern crate reqwest;
+extern crate chrono;
 
 #[macro_use] mod serde_enum_number;
 mod db_conn;
@@ -29,6 +31,7 @@ mod models;
 mod schema;
 mod util;
 mod config;
+mod cron;
 
 fn main() {
     // Launch the rocket

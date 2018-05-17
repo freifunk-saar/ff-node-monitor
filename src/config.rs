@@ -14,9 +14,15 @@ use util;
 #[derive(Serialize, Deserialize)]
 pub struct Ui {
     pub instance_name: String,
+    pub email_from: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Urls {
     #[serde(with = "url_serde")]
     pub root_url: Url,
-    pub email_from: String,
+    #[serde(with = "url_serde")]
+    pub nodes_url: Url,
 }
 
 #[derive(Deserialize)]
@@ -30,6 +36,7 @@ pub struct Secrets {
 pub struct Config {
     pub ui: Ui,
     pub secrets: Secrets,
+    pub urls: Urls,
 }
 
 impl Config {
