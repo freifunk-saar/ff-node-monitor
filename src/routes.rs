@@ -31,6 +31,7 @@ struct ListForm {
 fn list(form: ListForm, db: DbConn) -> Result<Template, Error> {
     use schema::monitors::dsl::*;
 
+    // TODO: Move this, probably to model.rs.
     let nodes = monitors
         .filter(email.eq(form.email.as_str()))
         .load::<Monitor>(&*db)?;
@@ -96,6 +97,7 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     let action = signed_action.verify(&config.secrets.action_signing_key)?;
 
     // Execute action
+    // TODO: Move this, probably to action.rs.
     let success = match action.op {
         Operation::Add => {
             // TODO: Check if the node ID even exists

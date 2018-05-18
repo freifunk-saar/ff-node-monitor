@@ -8,4 +8,5 @@ nodes_url = "https://..."
 
 [global.ff-node-monitor.secrets]
 postgres_url = "postgres://..."
+# generate the key with `openssl rand -hex 32`
 action_signing_key = "..."
