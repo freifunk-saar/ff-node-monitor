@@ -56,7 +56,7 @@ pub fn update_nodes(db: &PgConnection, config: &config::Config) -> Result<(), Er
     let nodes: Nodes = serde_json::from_reader(nodes)?;
 
     if nodes.version != 2 {
-        Err(NodeListError::UnsupportedVersion { version: nodes.version })?;
+        bail!(NodeListError::UnsupportedVersion { version: nodes.version });
     }
 
     println!("{:#?}", nodes.nodes);

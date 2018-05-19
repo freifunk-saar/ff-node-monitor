@@ -109,7 +109,7 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
             match r {
                 Ok(_) => true,
                 Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
-                Err(e) => Err(e)?,
+                Err(e) => bail!(e),
             }
         }
         Operation::Remove => {
