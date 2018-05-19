@@ -52,7 +52,7 @@ struct Nodes {
 
 /// Fetch the latest nodelist, update node state and send out emails
 pub fn update_nodes(db: &PgConnection, config: &config::Config) -> Result<(), Error> {
-    let nodes = reqwest::get(config.urls.nodes_url.as_str())?;
+    let nodes = reqwest::get(config.urls.nodes_url.clone())?;
     let nodes: Nodes = serde_json::from_reader(nodes)?;
 
     if nodes.version != 2 {
