@@ -101,12 +101,20 @@ fn run_action(
     config: State<Config>
 ) -> Result<Template, Error> {
     use schema::monitors;
-    use diesel::result::{Error, DatabaseErrorKind};
+    use diesel::result::{Error as DieselError, DatabaseErrorKind};
 
     // Determine and verify action
-    let signed_action = base64::decode(form.signed_action.as_str())?;
-    let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
-    let action = signed_action.verify(&config.secrets.action_signing_key)?;
+    let action : Result<Action, Error> = do catch {
+        let signed_action = base64::decode(form.signed_action.as_str())?;
+        let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
+        signed_action.verify(&config.secrets.action_signing_key)?
+    };
+    let action = match action {
+        Ok(a) => a,
+        Err(_) => {
+            return renderer.render("action_error", json!({}))
+        }
+    };
 
     // Execute action
     // TODO: Move this, probably to action.rs.
@@ -120,7 +128,7 @@ fn run_action(
             // Handle UniqueViolation gracefully
             match r {
                 Ok(_) => true,
-                Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
+                Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
                 Err(e) => bail!(e),
             }
         }

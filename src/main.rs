@@ -1,4 +1,4 @@
-#![feature(plugin, crate_visibility_modifier, custom_derive)]
+#![feature(plugin, crate_visibility_modifier, custom_derive, catch_expr)]
 #![plugin(rocket_codegen)]
 
 extern crate rocket;
