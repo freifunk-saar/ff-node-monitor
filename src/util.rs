@@ -24,6 +24,18 @@ pub mod hex_signing_key {
     }
 }
 
+/// Macro for generating URLs with query parameters
+macro_rules! url_query {
+    ( $url:expr, $( $name:ident = $value:expr ),* ) => {
+        {
+            let mut url = $url;
+            url.query_pairs_mut()
+                $(.append_pair(stringify!($name), $value.as_ref()))*;
+            url
+        }
+    };
+}
+
 /// Horribly hacky hack to get access to the Request, and then a template's body
 pub struct Request<'a, 'r: 'a>(&'a Req<'r>);
 

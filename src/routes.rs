@@ -51,11 +51,10 @@ fn prepare_action(
     let signed_action = base64::encode(&signed_action);
 
     // Generate email text. First line is user-visible sender, 2nd line subject.
-    let mut url = config.urls.root_url.join("run_action")?;
-    url.query_pairs_mut()
-        .append_pair("signed_action", signed_action.as_str());
+    let run_url = url_query!(config.urls.root_url.join("run_action")?,
+        signed_action = signed_action);
     let email_template = Template::render("confirm_action",
-        &json!({"action": action, "config": &config.ui, "url": url.as_str()}));
+        &json!({"action": action, "config": &config.ui, "url": run_url.as_str()}));
     let email_text = req.responder_body(email_template)?;
     let email_parts : Vec<&str> = email_text.splitn(3, '\n').collect();
     let (email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2]);
@@ -72,12 +71,11 @@ fn prepare_action(
     mailer.send(&email)?;
 
     // Render
-    let mut url = config.urls.root_url.join("list")?;
-    url.query_pairs_mut()
-        .append_pair("email", action.email.as_str());
+    let list_url = url_query!(config.urls.root_url.join("list")?,
+        email = action.email);
     Ok(Template::render("prepare_action", &json!({
         "action": action,
-        "list_url": url.as_str(),
+        "list_url": list_url.as_str(),
     })))
 }
 
@@ -125,12 +123,11 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     };
 
     // Render
-    let mut url = config.urls.root_url.join("list")?;
-    url.query_pairs_mut()
-        .append_pair("email", action.email.as_str());
+    let list_url = url_query!(config.urls.root_url.join("list")?,
+        email = action.email);
     Ok(Template::render("run_action", &json!({
         "action": action,
-        "list_url": url.as_str(),
+        "list_url": list_url.as_str(),
         "success": success,
     })))
 }

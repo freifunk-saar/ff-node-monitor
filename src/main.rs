@@ -24,12 +24,12 @@ extern crate reqwest;
 extern crate chrono;
 
 #[macro_use] mod serde_enum_number;
+#[macro_use] mod util;
 mod db_conn;
 mod routes;
 mod action;
 mod models;
 mod schema;
-mod util;
 mod config;
 mod cron;
 
