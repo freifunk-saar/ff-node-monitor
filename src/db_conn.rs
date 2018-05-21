@@ -37,7 +37,7 @@ pub struct DbConn(pub r2d2::PooledConnection<ConnMgr>);
 impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<DbConn, ()> {
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
         let pool = request.guard::<State<Pool>>()?;
         match pool.get() {
             Ok(conn) => Outcome::Success(DbConn(conn)),

@@ -1,5 +1,7 @@
-use rocket;
+use rocket::{self, State, Outcome};
+use rocket::request::{self, Request, FromRequest};
 use rocket::fairing::{Fairing, AdHoc};
+use rocket_contrib::Template;
 
 use toml;
 use url::Url;
@@ -7,6 +9,10 @@ use url_serde;
 use serde::Deserialize;
 use serde::de::IntoDeserializer;
 use ring::hmac;
+use serde_json;
+use failure::Error;
+
+use std::borrow::Cow;
 
 use db_conn;
 use util;
@@ -20,9 +26,9 @@ pub struct Ui {
 #[derive(Serialize, Deserialize)]
 pub struct Urls {
     #[serde(with = "url_serde")]
-    pub root_url: Url,
+    pub root: Url,
     #[serde(with = "url_serde")]
-    pub nodes_url: Url,
+    pub nodes: Url,
 }
 
 #[derive(Deserialize)]
@@ -59,4 +65,36 @@ pub fn fairing(section: &'static str) -> impl Fairing {
             .manage(db_conn::init_db_pool(config.secrets.postgres_url.as_str()))
             .manage(config))
     })
+}
+
+/// A request guard that makes the config available to all templates
+pub struct Renderer<'a>(&'a Config);
+
+impl<'a, 'r> FromRequest<'a, 'r> for Renderer<'a> {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
+        Outcome::Success(Renderer(request.guard::<State<Config>>()?.inner()))
+    }
+}
+
+impl<'a> Renderer<'a> {
+    pub fn render(
+        &self,
+        name: impl Into<Cow<'static, str>>,
+        mut context: serde_json::Value
+    ) -> Result<Template, Error> {
+        if let Some(obj) = context.as_object_mut() {
+            let old = obj.insert("config".to_string(), json!({
+                "ui": self.0.ui,
+                "urls": self.0.urls,
+            }));
+            if old.is_some() {
+                bail!("Someone else already put a config here")
+            }
+        } else {
+            bail!("The context must be a JSON object")
+        }
+        Ok(Template::render(name, context))
+    }
 }

@@ -1,0 +1,8 @@
+input[type=submit].link {
+    border: none;
+    background: none;
+    display: inline;
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}

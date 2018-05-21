@@ -4,8 +4,8 @@
 {{~#*inline "page"}}
   <p>
   {{#if success}}
-    <b>{{action.node}}</b> wird jetzt von <b>{{action.email}}</b>
-    {{#if action.op}}überwacht.{{else}}nicht mehr überwacht.{{/if}}
+    <b>{{action.node}}</b> wird jetzt von <b>{{action.email}}
+    {{#if action.op}}überwacht{{else}}nicht mehr überwacht{{/if}}</b>.
   {{else}}
     <b>{{action.node}}</b> wurde
     {{#if action.op}}schon{{else}}nicht{{/if}}

@@ -1,5 +1,6 @@
+use rocket::response::NamedFile;
+use rocket::{State, request::Form};
 use rocket_contrib::Template;
-use rocket::State;
 
 use diesel::prelude::*;
 use diesel;
@@ -10,16 +11,19 @@ use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
 
+use std::path::{Path, PathBuf};
+use std::io;
+
 use db_conn::DbConn;
 use models::*;
 use action::*;
-use config::Config;
+use config::{Config, Renderer};
 use util::Request;
 use cron;
 
 #[get("/")]
-fn index(config: State<Config>) -> Template {
-    Template::render("index", &json!({"config": &config.ui}))
+fn index(renderer: Renderer) -> Result<Template, Error> {
+    renderer.render("index", json!({}))
 }
 
 #[derive(Serialize, FromForm)]
@@ -28,33 +32,38 @@ struct ListForm {
 }
 
 #[get("/list?<form>")]
-fn list(form: ListForm, db: DbConn) -> Result<Template, Error> {
+fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
     use schema::monitors::dsl::*;
 
     // TODO: Move this, probably to model.rs.
     let nodes = monitors
         .filter(email.eq(form.email.as_str()))
         .load::<Monitor>(&*db)?;
-    Ok(Template::render("list", &json!({"form": form, "nodes": nodes})))
+    renderer.render("list", json!({"form": form, "nodes": nodes}))
 }
 
-#[get("/prepare_action?<action>")]
+#[post("/prepare_action", data = "<action>")]
 fn prepare_action(
-    action: Action,
+    action: Form<Action>,
     config: State<Config>,
+    renderer: Renderer,
     req: Request,
 ) -> Result<Template, Error>
 {
+    let action = action.into_inner();
+
     // obtain bytes for signed action payload
     let signed_action = action.clone().sign(&config.secrets.action_signing_key);
     let signed_action = serialize_to_vec(&signed_action)?;
     let signed_action = base64::encode(&signed_action);
 
     // Generate email text. First line is user-visible sender, 2nd line subject.
-    let run_url = url_query!(config.urls.root_url.join("run_action")?,
+    let run_url = url_query!(config.urls.root.join("run_action")?,
         signed_action = signed_action);
-    let email_template = Template::render("confirm_action",
-        &json!({"action": action, "config": &config.ui, "url": run_url.as_str()}));
+    let email_template = renderer.render("confirm_action", json!({
+        "action": action,
+        "url": run_url.as_str()
+    }))?;
     let email_text = req.responder_body(email_template)?;
     let email_parts : Vec<&str> = email_text.splitn(3, '\n').collect();
     let (email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2]);
@@ -71,12 +80,12 @@ fn prepare_action(
     mailer.send(&email)?;
 
     // Render
-    let list_url = url_query!(config.urls.root_url.join("list")?,
+    let list_url = url_query!(config.urls.root.join("list")?,
         email = action.email);
-    Ok(Template::render("prepare_action", &json!({
+    renderer.render("prepare_action", json!({
         "action": action,
         "list_url": list_url.as_str(),
-    })))
+    }))
 }
 
 #[derive(Serialize, FromForm)]
@@ -85,7 +94,12 @@ struct RunActionForm {
 }
 
 #[get("/run_action?<form>")]
-fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<Template, Error> {
+fn run_action(
+    form: RunActionForm,
+    db: DbConn,
+    renderer: Renderer,
+    config: State<Config>
+) -> Result<Template, Error> {
     use schema::monitors;
     use diesel::result::{Error, DatabaseErrorKind};
 
@@ -123,13 +137,13 @@ fn run_action(form: RunActionForm, db: DbConn, config: State<Config>) -> Result<
     };
 
     // Render
-    let list_url = url_query!(config.urls.root_url.join("list")?,
+    let list_url = url_query!(config.urls.root.join("list")?,
         email = action.email);
-    Ok(Template::render("run_action", &json!({
+    renderer.render("run_action", json!({
         "action": action,
         "list_url": list_url.as_str(),
         "success": success,
-    })))
+    }))
 }
 
 #[get("/cron")]
@@ -138,6 +152,16 @@ fn cron(db: DbConn, config: State<Config>) -> Result<(), Error> {
     Ok(())
 }
 
+#[get("/static/<file..>")]
+fn static_file(file: PathBuf) -> Result<Option<NamedFile>, Error> {
+    // Using Option<...> turns errors into 404
+    Ok(match NamedFile::open(Path::new("static/").join(file)) {
+        Ok(x) => Some(x),
+        Err(ref x) if x.kind() == io::ErrorKind::NotFound => None,
+        Err(x) => bail!(x),
+    })
+}
+
 pub fn routes() -> Vec<::rocket::Route> {
-    routes![index, list, prepare_action, run_action, cron]
+    routes![index, list, prepare_action, run_action, cron, static_file]
 }

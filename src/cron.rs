@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use failure::Error;
-use serde_json::{self, Value};
+use serde_json;
 use chrono::{DateTime, Utc};
 
 use config;
@@ -52,7 +52,7 @@ struct Nodes {
 
 /// Fetch the latest nodelist, update node state and send out emails
 pub fn update_nodes(db: &PgConnection, config: &config::Config) -> Result<(), Error> {
-    let nodes = reqwest::get(config.urls.nodes_url.clone())?;
+    let nodes = reqwest::get(config.urls.nodes.clone())?;
     let nodes: Nodes = serde_json::from_reader(nodes)?;
 
     if nodes.version != 2 {
