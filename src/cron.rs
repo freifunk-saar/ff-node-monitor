@@ -59,6 +59,7 @@ pub fn update_nodes(db: &PgConnection, config: &config::Config) -> Result<(), Er
         bail!(NodeListError::UnsupportedVersion { version: nodes.version });
     }
 
+    // TODO: do the main work
     println!("{:#?}", nodes.nodes);
 
     Ok(())

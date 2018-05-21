@@ -3,7 +3,6 @@ use rocket::{State, request::Form};
 use rocket_contrib::Template;
 
 use diesel::prelude::*;
-use diesel;
 use failure::Error;
 use lettre::{EmailTransport, SmtpTransport};
 use lettre_email::EmailBuilder;
@@ -15,8 +14,8 @@ use std::path::{Path, PathBuf};
 use std::io;
 
 use db_conn::DbConn;
-use models::*;
 use action::*;
+use models::*;
 use config::{Config, Renderer};
 use util::Request;
 use cron;
@@ -100,9 +99,6 @@ fn run_action(
     renderer: Renderer,
     config: State<Config>
 ) -> Result<Template, Error> {
-    use schema::monitors;
-    use diesel::result::{Error as DieselError, DatabaseErrorKind};
-
     // Determine and verify action
     let action : Result<Action, Error> = do catch {
         let signed_action = base64::decode(form.signed_action.as_str())?;
@@ -117,32 +113,7 @@ fn run_action(
     };
 
     // Execute action
-    // TODO: Move this, probably to action.rs.
-    let success = match action.op {
-        Operation::Add => {
-            // TODO: Check if the node ID even exists
-            let m = NewMonitor { node: action.node.as_str(), email: action.email.as_str() };
-            let r = diesel::insert_into(monitors::table)
-                .values(&m)
-                .execute(&*db);
-            // Handle UniqueViolation gracefully
-            match r {
-                Ok(_) => true,
-                Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
-                Err(e) => bail!(e),
-            }
-        }
-        Operation::Remove => {
-            use schema::monitors::dsl::*;
-
-            let rows = monitors
-                .filter(node.eq(action.node.as_str()))
-                .filter(email.eq(action.email.as_str()));
-            let num_deleted = diesel::delete(rows)
-                .execute(&*db)?;
-            num_deleted > 0
-        }
-    };
+    let success = action.run(&*db)?;
 
     // Render
     let list_url = url_query!(config.urls.root.join("list")?,

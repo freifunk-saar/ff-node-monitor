@@ -1,9 +1,15 @@
 use rocket::request::FromFormValue;
 use rocket::http::RawStr;
 
+use diesel::prelude::*;
+use diesel;
+use diesel::result::{Error as DieselError, DatabaseErrorKind};
 use ring::{hmac, error};
-
+use failure::Error;
 use rmp_serde::to_vec as serialize_to_vec;
+
+use schema::monitors;
+use models::*;
 
 enum_number!(Operation {
     Add = 1,
@@ -55,6 +61,34 @@ impl Action {
         let signature = self.compute_signature(key);
         let signature = signature.as_ref().to_vec().into_boxed_slice();
         SignedAction { action: self, signature }
+    }
+
+    pub fn run(&self, db: &PgConnection) -> Result<bool, Error> {
+        Ok(match self.op {
+            Operation::Add => {
+                // TODO: Check if the node ID even exists
+                let m = NewMonitor { node: self.node.as_str(), email: self.email.as_str() };
+                let r = diesel::insert_into(monitors::table)
+                    .values(&m)
+                    .execute(db);
+                // Handle UniqueViolation gracefully
+                match r {
+                    Ok(_) => true,
+                    Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
+                    Err(e) => bail!(e),
+                }
+            }
+            Operation::Remove => {
+                use schema::monitors::dsl::*;
+
+                let rows = monitors
+                    .filter(node.eq(self.node.as_str()))
+                    .filter(email.eq(self.email.as_str()));
+                let num_deleted = diesel::delete(rows)
+                    .execute(db)?;
+                num_deleted > 0
+            }
+        })
     }
 }
 
