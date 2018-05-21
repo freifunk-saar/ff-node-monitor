@@ -9,7 +9,7 @@ table! {
     nodes (node) {
         node -> Varchar,
         name -> Varchar,
-        state -> Bool,
+        online -> Bool,
     }
 }
 

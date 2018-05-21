@@ -67,7 +67,7 @@ impl Action {
         Ok(match self.op {
             Operation::Add => {
                 // TODO: Check if the node ID even exists
-                let m = NewMonitor { node: self.node.as_str(), email: self.email.as_str() };
+                let m = Monitor { node: self.node.as_str(), email: self.email.as_str() };
                 let r = diesel::insert_into(monitors::table)
                     .values(&m)
                     .execute(db);
@@ -81,9 +81,7 @@ impl Action {
             Operation::Remove => {
                 use schema::monitors::dsl::*;
 
-                let rows = monitors
-                    .filter(node.eq(self.node.as_str()))
-                    .filter(email.eq(self.email.as_str()));
+                let rows = monitors.find((self.node.as_str(), self.email.as_str()));
                 let num_deleted = diesel::delete(rows)
                     .execute(db)?;
                 num_deleted > 0

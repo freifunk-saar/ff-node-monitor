@@ -5,7 +5,6 @@ use rocket_contrib::Template;
 use diesel::prelude::*;
 use failure::Error;
 use lettre::{EmailTransport, SmtpTransport};
-use lettre_email::EmailBuilder;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
@@ -17,7 +16,7 @@ use db_conn::DbConn;
 use action::*;
 use models::*;
 use config::{Config, Renderer};
-use util::Request;
+use util::EmailBuilder;
 use cron;
 
 #[get("/")]
@@ -34,10 +33,9 @@ struct ListForm {
 fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
     use schema::monitors::dsl::*;
 
-    // TODO: Move this, probably to model.rs.
     let nodes = monitors
         .filter(email.eq(form.email.as_str()))
-        .load::<Monitor>(&*db)?;
+        .load::<MonitorQuery>(&*db)?;
     renderer.render("list", json!({"form": form, "nodes": nodes}))
 }
 
@@ -46,7 +44,7 @@ fn prepare_action(
     action: Form<Action>,
     config: State<Config>,
     renderer: Renderer,
-    req: Request,
+    email_builder: EmailBuilder,
 ) -> Result<Template, Error>
 {
     let action = action.into_inner();
@@ -56,25 +54,17 @@ fn prepare_action(
     let signed_action = serialize_to_vec(&signed_action)?;
     let signed_action = base64::encode(&signed_action);
 
-    // Generate email text. First line is user-visible sender, 2nd line subject.
+    // Generate email text
     let run_url = url_query!(config.urls.root.join("run_action")?,
         signed_action = signed_action);
     let email_template = renderer.render("confirm_action", json!({
         "action": action,
         "url": run_url.as_str()
     }))?;
-    let email_text = req.responder_body(email_template)?;
-    let email_parts : Vec<&str> = email_text.splitn(3, '\n').collect();
-    let (email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2]);
-
-    // Build email
-    let email = EmailBuilder::new()
+    // Build and send email
+    let email = email_builder.new(email_template)?
         .to(action.email.as_str())
-        .from((config.ui.email_from.as_str(), email_from))
-        .subject(email_subject)
-        .text(email_body)
         .build()?;
-    // Send email
     let mut mailer = SmtpTransport::builder_unencrypted_localhost()?.build();
     mailer.send(&email)?;
 
@@ -126,8 +116,13 @@ fn run_action(
 }
 
 #[get("/cron")]
-fn cron(db: DbConn, config: State<Config>) -> Result<(), Error> {
-    cron::update_nodes(&*db, &*config)?;
+fn cron(
+    db: DbConn,
+    config: State<Config>,
+    renderer: Renderer,
+    email_builder: EmailBuilder,
+) -> Result<(), Error> {
+    cron::update_nodes(&*db, &*config, renderer, email_builder)?;
     Ok(())
 }
 

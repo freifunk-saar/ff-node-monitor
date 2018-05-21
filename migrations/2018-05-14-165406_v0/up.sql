@@ -9,5 +9,5 @@ CREATE TABLE nodes
 (
   node character varying NOT NULL PRIMARY KEY,
   name character varying NOT NULL,
-  state boolean NOT NULL
+  online boolean NOT NULL
 );

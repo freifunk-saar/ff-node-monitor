@@ -2,10 +2,16 @@ use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use failure::Error;
 use serde_json;
-use chrono::{DateTime, Utc};
+use reqwest;
+use diesel;
+use lettre::{EmailTransport, SmtpTransport};
+
+use std::collections::HashMap;
 
 use config;
-use reqwest;
+use models;
+use schema::nodes;
+use util::EmailBuilder;
 
 #[derive(Debug, Fail)]
 enum NodeListError {
@@ -15,52 +21,167 @@ enum NodeListError {
     },
 }
 
-#[derive(Deserialize, Debug)]
-struct NodeInfo {
-    node_id: String,
-    hostname: String,
+mod json {
+    use chrono::{DateTime, Utc};
+
+    #[derive(Deserialize, Debug)]
+    crate struct NodeInfo {
+        crate node_id: String,
+        crate hostname: String,
+    }
+
+    #[derive(Deserialize, Debug)]
+    crate struct Flags {
+        crate online: bool,
+    }
+
+    #[derive(Deserialize, Debug)]
+    crate struct Statistics {
+        crate memory_usage: Option<f64>,
+        crate rootfs_usage: Option<f64>,
+        crate loadavg: Option<f64>,
+        crate clients: Option<usize>,
+    }
+
+    #[derive(Deserialize, Debug)]
+    crate struct Node {
+        crate nodeinfo: NodeInfo,
+        crate flags: Flags,
+        crate statistics: Statistics,
+        crate lastseen: DateTime<Utc>,
+        crate firstseen: DateTime<Utc>,
+    }
+
+    #[derive(Deserialize, Debug)]
+    crate struct Nodes {
+        crate version: usize,
+        crate nodes: Vec<Node>,
+        crate timestamp: DateTime<Utc>,
+    }
 }
 
-#[derive(Deserialize, Debug)]
-struct Flags {
+// Just the data about the node (the RHS of the HashMap)
+#[derive(Clone, PartialEq, Eq, Serialize)]
+struct NodeData {
+    name: String,
     online: bool,
 }
 
-#[derive(Deserialize, Debug)]
-struct Statistics {
-    memory_usage: Option<f64>,
-    rootfs_usage: Option<f64>,
-    loadavg: Option<f64>,
-    clients: Option<usize>,
+// From a JSON node, extract node ID and other information
+fn json_to_node_data(node: json::Node) -> (String, NodeData) {
+    let node_data = NodeData { name: node.nodeinfo.hostname, online: node.flags.online };
+    (node.nodeinfo.node_id, node_data)
 }
 
-#[derive(Deserialize, Debug)]
-struct Node {
-    nodeinfo: NodeInfo,
-    flags: Flags,
-    statistics: Statistics,
-    lastseen: DateTime<Utc>,
-    firstseen: DateTime<Utc>,
-}
-
-#[derive(Deserialize, Debug)]
-struct Nodes {
-    version: usize,
-    nodes: Vec<Node>,
-    timestamp: DateTime<Utc>,
+fn db_to_node_data(node: models::NodeQuery) -> (String, NodeData) {
+    let node_data = NodeData { name: node.name, online: node.online };
+    (node.node, node_data)
 }
 
 /// Fetch the latest nodelist, update node state and send out emails
-pub fn update_nodes(db: &PgConnection, config: &config::Config) -> Result<(), Error> {
-    let nodes = reqwest::get(config.urls.nodes.clone())?;
-    let nodes: Nodes = serde_json::from_reader(nodes)?;
+pub fn update_nodes(
+    db: &PgConnection,
+    config: &config::Config,
+    renderer: config::Renderer,
+    email_builder: EmailBuilder,
+) -> Result<(), Error> {
+    let cur_nodes = reqwest::get(config.urls.nodes.clone())?;
+    let cur_nodes: json::Nodes = serde_json::from_reader(cur_nodes)?;
 
-    if nodes.version != 2 {
-        bail!(NodeListError::UnsupportedVersion { version: nodes.version });
+    if cur_nodes.version != 2 {
+        bail!(NodeListError::UnsupportedVersion { version: cur_nodes.version });
     }
 
-    // TODO: do the main work
-    println!("{:#?}", nodes.nodes);
+    // Build node HashMap: map node ID to name and online state
+    let mut cur_nodes_map : HashMap<String, NodeData> = HashMap::new();
+    for cur_node in cur_nodes.nodes.into_iter() {
+        let (id, data) = json_to_node_data(cur_node);
+        cur_nodes_map.insert(id, data);
+    }
+
+    // Compute which nodes changed their state, also update node names in DB
+    let changed : Vec<(String, NodeData)> = db.transaction::<_, Error, _>(|| {
+        let mut changed = Vec::new();
+
+        {
+            use schema::nodes::dsl::*;
+            // Go over every node in the database
+            let db_nodes = nodes.load::<models::NodeQuery>(db)?;
+            for db_node in db_nodes.into_iter() {
+                let (id, db_data) = db_to_node_data(db_node);
+                if let Some(cur_data) = cur_nodes_map.remove(&id) {
+                    // We already know this node.
+                    // Did it change?
+                    if cur_data != db_data {
+                        // Update in database
+                        diesel::update(nodes.find(id.as_str()))
+                            .set((
+                                name.eq(cur_data.name.as_str()),
+                                online.eq(cur_data.online)
+                            ))
+                            .execute(db)?;
+                    }
+                    // Did its online status change?
+                    if cur_data.online != db_data.online {
+                        changed.push((id, cur_data));
+                    }
+                } else {
+                    // The node is in the DB but does not exist any more.
+                    diesel::delete(nodes.find(id.as_str()))
+                        .execute(db)?;
+                    if db_data.online {
+                        // The node was online, so it being gone is a change to offline
+                        changed.push((id, NodeData { online: false, ..db_data }));
+                    }
+                }
+            }
+        }
+
+        // Go over nodes remaining in the hash map -- they are not in the DB
+        for (id, cur_data) in cur_nodes_map.into_iter() {
+            // Insert into DB
+            diesel::insert_into(nodes::table)
+                .values(&models::Node {
+                    node: id.as_str(),
+                    name: cur_data.name.as_str(),
+                    online: cur_data.online
+                })
+                .execute(db)?;
+            if cur_data.online {
+                // The node online, so it appearing is a change from the implicit offline
+                // it was in when it did not exist.
+                changed.push((id, cur_data));
+            }
+        }
+
+        Ok(changed)
+    })?;
+
+    // Send out notifications (not in the transaction as we don't really care here -- also
+    // we have an external side-effect, the email, which we cannot roll back anyway)
+    let mut mailer = SmtpTransport::builder_unencrypted_localhost()?.build();
+    for (id, cur_data) in changed.into_iter() {
+        // See who monitors this node
+        let watchers = {
+            use schema::monitors::dsl::*;
+            monitors
+                .filter(node.eq(id.as_str()))
+                .load::<models::MonitorQuery>(&*db)?
+        };
+        // Send them email
+        for watcher in watchers.iter() {
+            // Generate email text
+            let email_template = renderer.render("notification", json!({
+                "id": id.as_str(),
+                "node": cur_data,
+            }))?;
+            // Build and send email
+            let email = email_builder.new(email_template)?
+                .to(watcher.email.as_str())
+                .build()?;
+            mailer.send(&email)?;
+        }
+    }
 
     Ok(())
 }
