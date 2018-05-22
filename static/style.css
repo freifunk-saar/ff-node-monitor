@@ -6,3 +6,11 @@ input[type=submit].link {
     text-decoration: underline;
     cursor: pointer;
 }
+
+.node .online {
+    color: green;
+}
+
+.node .offline, .node .gone {
+    color: red;
+}

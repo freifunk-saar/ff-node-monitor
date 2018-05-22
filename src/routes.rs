@@ -31,11 +31,14 @@ struct ListForm {
 
 #[get("/list?<form>")]
 fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
-    use schema::monitors::dsl::*;
+    use schema::monitors;
+    use schema::nodes;
 
-    let nodes = monitors
-        .filter(email.eq(form.email.as_str()))
-        .load::<MonitorQuery>(&*db)?;
+    let nodes = monitors::table
+        .filter(monitors::email.eq(form.email.as_str()))
+        .left_join(nodes::table.on(monitors::node.eq(nodes::node)))
+        .order_by(monitors::node)
+        .load::<(MonitorQuery, Option<NodeQuery>)>(&*db)?;
     renderer.render("list", json!({"form": form, "nodes": nodes}))
 }
 

@@ -5,10 +5,21 @@
   {{#each nodes}}
   <div>
     <form method="post" action="prepare_action">
-      <span class="node" data-node-id="{{this.node}}">{{this.node}}</span>
-      <input type="hidden" name="email" value="{{this.email}}">
+      <span class="node">
+      {{# if this[1] }}
+        <b>{{this[1].name}}</b> ({{this[1].node}}):
+        {{# if this[1].online }}
+            <span class="online">online</span>
+        {{else}}
+            <span class="offline">offline</span>
+        {{/if}}
+      {{else}}
+        <i>{{this[0].node}}</i>: <span class="gone">verschwunden</span>
+      {{/if}}
+      </span>
+      <input type="hidden" name="email" value="{{this[0].email}}">
       <input type="hidden" name="op" value="remove">
-      <input type="hidden" name="node" value="{{this.node}}">
+      <input type="hidden" name="node" value="{{this[0].node}}">
       <input type="submit" value="[x]" class="link">
     </form>
   </div>
