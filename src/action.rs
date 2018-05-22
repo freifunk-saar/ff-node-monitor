@@ -64,6 +64,7 @@ impl Action {
     }
 
     pub fn run(&self, db: &PgConnection) -> Result<bool, Error> {
+        let m = Monitor { node: self.node.as_str(), email: self.email.as_str() };
         Ok(match self.op {
             Operation::Add => {
                 db.transaction::<_, Error, _>(|| {
@@ -75,7 +76,6 @@ impl Action {
                         return Ok(false);
                     }
                     // Add it
-                    let m = Monitor { node: self.node.as_str(), email: self.email.as_str() };
                     let r = diesel::insert_into(monitors::table)
                         .values(&m)
                         .execute(db);
@@ -88,9 +88,7 @@ impl Action {
                 })?
             }
             Operation::Remove => {
-                let rows = monitors::table.find((self.node.as_str(), self.email.as_str()));
-                let num_deleted = diesel::delete(rows)
-                    .execute(db)?;
+                let num_deleted = diesel::delete(&m).execute(db)?;
                 num_deleted > 0
             }
         })
