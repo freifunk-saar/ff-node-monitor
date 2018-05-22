@@ -9,7 +9,7 @@
   {{else}}
     <b>{{action.node}}</b> wurde
     {{#if action.op}}schon{{else}}nicht{{/if}}
-    von <b>{{action.email}}</b> überwacht, es hat sich also nichts geändert.
+    von <b>{{action.email}}</b> überwacht{{#if action.op}}, oder es gibt keinen Knoten mit dieser ID{{/if}}.
   {{/if}}
   </p>
   <p>

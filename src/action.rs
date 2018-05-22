@@ -8,7 +8,7 @@ use ring::{hmac, error};
 use failure::Error;
 use rmp_serde::to_vec as serialize_to_vec;
 
-use schema::monitors;
+use schema::*;
 use models::*;
 
 enum_number!(Operation {
@@ -66,22 +66,29 @@ impl Action {
     pub fn run(&self, db: &PgConnection) -> Result<bool, Error> {
         Ok(match self.op {
             Operation::Add => {
-                // TODO: Check if the node ID even exists
-                let m = Monitor { node: self.node.as_str(), email: self.email.as_str() };
-                let r = diesel::insert_into(monitors::table)
-                    .values(&m)
-                    .execute(db);
-                // Handle UniqueViolation gracefully
-                match r {
-                    Ok(_) => true,
-                    Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
-                    Err(e) => bail!(e),
-                }
+                db.transaction::<_, Error, _>(|| {
+                    // Check if the node ID even exists
+                    let node = nodes::table
+                        .find(self.node.as_str())
+                        .first::<NodeQuery>(db).optional()?;
+                    if node.is_none() {
+                        return Ok(false);
+                    }
+                    // Add it
+                    let m = Monitor { node: self.node.as_str(), email: self.email.as_str() };
+                    let r = diesel::insert_into(monitors::table)
+                        .values(&m)
+                        .execute(db);
+                    // Handle UniqueViolation gracefully
+                    Ok(match r {
+                        Ok(_) => true,
+                        Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
+                        Err(e) => bail!(e),
+                    })
+                })?
             }
             Operation::Remove => {
-                use schema::monitors::dsl::*;
-
-                let rows = monitors.find((self.node.as_str(), self.email.as_str()));
+                let rows = monitors::table.find((self.node.as_str(), self.email.as_str()));
                 let num_deleted = diesel::delete(rows)
                     .execute(db)?;
                 num_deleted > 0

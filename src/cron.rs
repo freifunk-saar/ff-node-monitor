@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 use config;
 use models;
-use schema::nodes;
+use schema::*;
 use util::EmailBuilder;
 
 #[derive(Debug, Fail)]
@@ -103,36 +103,33 @@ pub fn update_nodes(
     let changed : Vec<(String, NodeData)> = db.transaction::<_, Error, _>(|| {
         let mut changed = Vec::new();
 
-        {
-            use schema::nodes::dsl::*;
-            // Go over every node in the database
-            let db_nodes = nodes.load::<models::NodeQuery>(db)?;
-            for db_node in db_nodes.into_iter() {
-                let (id, db_data) = db_to_node_data(db_node);
-                if let Some(cur_data) = cur_nodes_map.remove(&id) {
-                    // We already know this node.
-                    // Did it change?
-                    if cur_data != db_data {
-                        // Update in database
-                        diesel::update(nodes.find(id.as_str()))
-                            .set((
-                                name.eq(cur_data.name.as_str()),
-                                online.eq(cur_data.online)
-                            ))
-                            .execute(db)?;
-                    }
-                    // Did its online status change?
-                    if cur_data.online != db_data.online {
-                        changed.push((id, cur_data));
-                    }
-                } else {
-                    // The node is in the DB but does not exist any more.
-                    diesel::delete(nodes.find(id.as_str()))
+        // Go over every node in the database
+        let db_nodes = nodes::table.load::<models::NodeQuery>(db)?;
+        for db_node in db_nodes.into_iter() {
+            let (id, db_data) = db_to_node_data(db_node);
+            if let Some(cur_data) = cur_nodes_map.remove(&id) {
+                // We already know this node.
+                // Did it change?
+                if cur_data != db_data {
+                    // Update in database
+                    diesel::update(nodes::table.find(id.as_str()))
+                        .set((
+                            nodes::name.eq(cur_data.name.as_str()),
+                            nodes::online.eq(cur_data.online)
+                        ))
                         .execute(db)?;
-                    if db_data.online {
-                        // The node was online, so it being gone is a change to offline
-                        changed.push((id, NodeData { online: false, ..db_data }));
-                    }
+                }
+                // Did its online status change?
+                if cur_data.online != db_data.online {
+                    changed.push((id, cur_data));
+                }
+            } else {
+                // The node is in the DB but does not exist any more.
+                diesel::delete(nodes::table.find(id.as_str()))
+                    .execute(db)?;
+                if db_data.online {
+                    // The node was online, so it being gone is a change to offline
+                    changed.push((id, NodeData { online: false, ..db_data }));
                 }
             }
         }
@@ -163,9 +160,8 @@ pub fn update_nodes(
     for (id, cur_data) in changed.into_iter() {
         // See who monitors this node
         let watchers = {
-            use schema::monitors::dsl::*;
-            monitors
-                .filter(node.eq(id.as_str()))
+            monitors::table
+                .filter(monitors::node.eq(id.as_str()))
                 .load::<models::MonitorQuery>(&*db)?
         };
         // Send them email
