@@ -57,11 +57,14 @@ fn prepare_action(
     let signed_action = base64::encode(&signed_action);
 
     // Generate email text
-    let run_url = url_query!(config.urls.root.join("run_action")?,
+    let action_url = url_query!(config.urls.root.join("run_action")?,
         signed_action = signed_action);
+    let list_url = url_query!(config.urls.root.join("list")?,
+        email = action.email);
     let email_template = renderer.render("confirm_action", json!({
         "action": action,
-        "url": run_url.as_str()
+        "action_url": action_url.as_str(),
+        "list_url": list_url.as_str(),
     }))?;
     // Build and send email
     let email = email_builder.new(email_template)?
