@@ -64,7 +64,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for EmailBuilder<'a, 'r> {
 }
 
 impl<'a, 'r> EmailBuilder<'a, 'r> {
-    fn responder_body<'re, R: Responder<'re>>(&self, responder: R) -> Result<String, Error> {
+    fn responder_body<'re>(&self, responder: impl Responder<'re>) -> Result<String, Error> {
         let mut resp = responder.respond_to(self.request)
             .map_err(|status| ResponderError::RenderFailure { status })?;
         Ok(resp.body_string().ok_or(ResponderError::NoBody)?)
