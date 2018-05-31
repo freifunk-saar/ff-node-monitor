@@ -90,7 +90,8 @@ impl<'a, 'r> EmailBuilder<'a, 'r> {
     pub fn new(&self, email_template: Template) -> Result<lettre_email::EmailBuilder, Error> {
         let email_text = self.responder_body(email_template)?;
         let email_parts : Vec<&str> = email_text.splitn(4, '\n').collect();
-        let (_, email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2], email_parts[3]);
+        let (empty, email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2], email_parts[3]);
+        assert!(empty.is_empty(), "The first line of the email template must be empty");
 
         // Build email
         Ok(lettre_email::EmailBuilder::new()

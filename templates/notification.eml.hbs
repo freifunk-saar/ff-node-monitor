@@ -1,4 +1,23 @@
-# First line is comment, second line user-visible From, third line Subject, the rest the email body.
+{{!
+//  ff-node-monitor -- Monitoring for Freifunk nodes
+//  Copyright (C) 2018  Ralf Jung <post AT ralfj DOT de>
+//
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU Affero General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU Affero General Public License for more details.
+//
+//  You should have received a copy of the GNU Affero General Public License
+//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+// First line is user-visible From, second line Subject, the rest the email body.
+}}
+{{! # First line is user-visible From, second line Subject, the rest the email body. }}
 {{{config.ui.instance_name}}} Knotenüberwachung
 {{{config.ui.instance_name}}} Knotenüberwachung: {{{node.name}}} ist {{#if node.online}}wieder online{{else}}OFFLINE{{/if}}
 Dies ist eine Meldung von der {{{config.ui.instance_name}}} Knotenüberwachung:
