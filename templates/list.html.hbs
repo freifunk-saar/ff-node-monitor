@@ -37,7 +37,7 @@
   <form method="post" action="prepare_action">
     <input type="hidden" name="email" value="{{form.email}}">
     <input type="hidden" name="op" value="add">
-    Knotenname aus Liste auswählen:
+    Knotennamen aus Liste auswählen:
     <select name="node">
       {{#each all_nodes}}
         <option value="{{this.id}}">{{this.name}} ({{this.id}})</option>
@@ -45,5 +45,6 @@
     </select>
     <input type="submit" value="Hinzufügen">
   </form>
+  Wenn dein Knoten gerade neu ist und nocht nicht in der Liste auftaucht, versuche es in ein paar Minuten erneut.
 {{~/inline}}
 {{~> partials/page }}
