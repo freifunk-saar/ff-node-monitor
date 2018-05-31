@@ -178,8 +178,11 @@ pub fn update_nodes(
         let node = cur_data.into_model(id);
         for watcher in watchers.iter() {
             // Generate email text
+            let list_url = url_query!(config.urls.root.join("list")?,
+                email = watcher.email);
             let email_template = renderer.render("notification", json!({
                 "node": node,
+                "list_url": list_url.as_str(),
             }))?;
             // Build and send email
             let email = email_builder.new(email_template)?
