@@ -1,13 +1,13 @@
 table! {
-    monitors (node, email) {
-        node -> Varchar,
+    monitors (id, email) {
+        id -> Varchar,
         email -> Varchar,
     }
 }
 
 table! {
-    nodes (node) {
-        node -> Varchar,
+    nodes (id) {
+        id -> Varchar,
         name -> Varchar,
         online -> Bool,
     }

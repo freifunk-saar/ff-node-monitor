@@ -64,7 +64,7 @@ impl Action {
     }
 
     pub fn run(&self, db: &PgConnection) -> Result<bool, Error> {
-        let m = Monitor { node: self.node.as_str(), email: self.email.as_str() };
+        let m = Monitor { id: self.node.as_str(), email: self.email.as_str() };
         Ok(match self.op {
             Operation::Add => {
                 db.transaction::<_, Error, _>(|| {

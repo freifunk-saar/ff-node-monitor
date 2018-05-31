@@ -73,9 +73,19 @@ fn json_to_node_data(node: json::Node) -> (String, NodeData) {
     (node.nodeinfo.node_id, node_data)
 }
 
-fn db_to_node_data(node: models::NodeQuery) -> (String, NodeData) {
+fn model_to_node_data(node: models::NodeQuery) -> (String, NodeData) {
     let node_data = NodeData { name: node.name, online: node.online };
-    (node.node, node_data)
+    (node.id, node_data)
+}
+
+impl NodeData {
+    fn into_model(self, id: String) -> models::NodeQuery {
+        models::NodeQuery {
+            id,
+            name: self.name,
+            online: self.online,
+        }
+    }
 }
 
 /// Fetch the latest nodelist, update node state and send out emails
@@ -106,7 +116,7 @@ pub fn update_nodes(
         // Go over every node in the database
         let db_nodes = nodes::table.load::<models::NodeQuery>(db)?;
         for db_node in db_nodes.into_iter() {
-            let (id, db_data) = db_to_node_data(db_node);
+            let (id, db_data) = model_to_node_data(db_node);
             if let Some(cur_data) = cur_nodes_map.remove(&id) {
                 // We already know this node.
                 // Did it change?
@@ -139,7 +149,7 @@ pub fn update_nodes(
             // Insert into DB
             diesel::insert_into(nodes::table)
                 .values(&models::Node {
-                    node: id.as_str(),
+                    id: id.as_str(),
                     name: cur_data.name.as_str(),
                     online: cur_data.online
                 })
@@ -161,15 +171,15 @@ pub fn update_nodes(
         // See who monitors this node
         let watchers = {
             monitors::table
-                .filter(monitors::node.eq(id.as_str()))
+                .filter(monitors::id.eq(id.as_str()))
                 .load::<models::MonitorQuery>(&*db)?
         };
         // Send them email
+        let node = cur_data.into_model(id);
         for watcher in watchers.iter() {
             // Generate email text
             let email_template = renderer.render("notification", json!({
-                "id": id.as_str(),
-                "node": cur_data,
+                "node": node,
             }))?;
             // Build and send email
             let email = email_builder.new(email_template)?

@@ -33,12 +33,19 @@ struct ListForm {
 fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
     use schema::*;
 
-    let nodes = monitors::table
+    let watched_nodes = monitors::table
         .filter(monitors::email.eq(form.email.as_str()))
-        .left_join(nodes::table.on(monitors::node.eq(nodes::node)))
-        .order_by(monitors::node)
+        .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
+        .order_by(monitors::id)
         .load::<(MonitorQuery, Option<NodeQuery>)>(&*db)?;
-    renderer.render("list", json!({"form": form, "watched_nodes": nodes}))
+    let all_nodes = nodes::table
+        .order_by(nodes::name)
+        .load::<NodeQuery>(&*db)?;
+    renderer.render("list", json!({
+        "form": form,
+        "watched_nodes": watched_nodes,
+        "all_nodes": all_nodes,
+    }))
 }
 
 #[post("/prepare_action", data = "<action>")]
