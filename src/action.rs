@@ -81,9 +81,9 @@ impl Action {
 
     pub fn run(&self, db: &PgConnection) -> Result<bool, Error> {
         let m = Monitor { id: self.node.as_str(), email: self.email.as_str() };
-        Ok(match self.op {
-            Operation::Add => {
-                db.transaction::<_, Error, _>(|| {
+        db.transaction::<_, Error, _>(|| {
+            Ok(match self.op {
+                Operation::Add => {
                     // Check if the node ID even exists
                     let node = nodes::table
                         .find(self.node.as_str())
@@ -96,17 +96,17 @@ impl Action {
                         .values(&m)
                         .execute(db);
                     // Handle UniqueViolation gracefully
-                    Ok(match r {
+                    match r {
                         Ok(_) => true,
                         Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
                         Err(e) => bail!(e),
-                    })
-                })?
-            }
-            Operation::Remove => {
-                let num_deleted = diesel::delete(&m).execute(db)?;
-                num_deleted > 0
-            }
+                    }
+                }
+                Operation::Remove => {
+                    let num_deleted = diesel::delete(&m).execute(db)?;
+                    num_deleted > 0
+                }
+            })
         })
     }
 }
