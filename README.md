@@ -1,4 +1,4 @@
-# ff-node-monitor
+# ff-node-monitor [![Build Status](https://travis-ci.org/freifunk-saar/ff-node-monitor.svg?branch=master)](https://travis-ci.org/freifunk-saar/ff-node-monitor)
 
 This is a simple web service for Freifunk networks that lets node operators
 register to monitor their nodes.  It uses the `nodes.json` from
