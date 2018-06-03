@@ -4,7 +4,7 @@ email_from = "...@...freifunk.net"
 
 [global.ff-node-monitor.urls]
 root_url = "https://..."
-nodes_url = "https://..."
+nodes_url = "https://.../nodes.json"
 
 [global.ff-node-monitor.secrets]
 postgres_url = "postgres://..."
