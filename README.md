@@ -16,51 +16,51 @@ the steps accordingly.
 
 ### Build Process
 
-1. First, let's create a user for this service, and change to its home directory:
+1.  First, let's create a user for this service, and change to its home directory:
 
-```
-sudo adduser ff-node-monitor --home /var/lib/ff-node-monitor --system
-cd /var/lib/ff-node-monitor
-```
+    ```
+    sudo adduser ff-node-monitor --home /var/lib/ff-node-monitor --system
+    cd /var/lib/ff-node-monitor
+    ```
 
-2. We need some development libraries for the build process:
+2.  We need some development libraries for the build process:
 
-```
-sudo apt install libssl-dev libpq-dev
-```
+    ```
+    sudo apt install libssl-dev libpq-dev
+    ```
 
-3. *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
-   [Rocket](https://rocket.rs/), which means it needs a nightly version of Rust:
+3.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
+    [Rocket](https://rocket.rs/), which means it needs a nightly version of Rust:
 
-```
-curl https://sh.rustup.rs -sSf > rustup.sh
-sudo -u ff-node-monitor sh rustup.sh --default-toolchain nightly
-rm rustup.sh
-```
+    ```
+    curl https://sh.rustup.rs -sSf > rustup.sh
+    sudo -u ff-node-monitor sh rustup.sh --default-toolchain nightly
+    rm rustup.sh
+    ```
 
-4. Now we can fetch the sources and build them:
+4.  Now we can fetch the sources and build them:
 
-```
-sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git src
-cd src
-sudo -u ff-node-monitor cargo build --release
-```
+    ```
+    sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git src
+    cd src
+    sudo -u ff-node-monitor cargo build --release
+    ```
 
 ### Database setup
 
-1. *ff-node-monitor* needs PostgreSQL as a database backend:
+1.  *ff-node-monitor* needs PostgreSQL as a database backend:
 
-```
-sudo apt install postgresql
-```
+    ```
+    sudo apt install postgresql
+    ```
 
-2. We will use the `ff-node-monitor` system user to access PostgreSQL, and we
-   need to create a database for the service:
+2.  We will use the `ff-node-monitor` system user to access PostgreSQL, and we
+    need to create a database for the service:
 
-```
-sudo -u postgres psql -c 'CREATE ROLE "ff-node-monitor";'
-sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor";'
-```
+    ```
+    sudo -u postgres psql -c 'CREATE ROLE "ff-node-monitor";'
+    sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor";'
+    ```
 
 ### Service setup
 
@@ -93,13 +93,13 @@ sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-nod
     the site configuration), using the `node-monitor` subdirectory:
 
     ```
-    	location /node-monitor/ {
-    		proxy_pass http://127.0.0.1:8833/;
-    	}
-        # Directly serve static files, no need to run them through the app
-    	location /node-monitor/static/ {
-    		alias /var/lib/ff-node-monitor/src/static/;
-    	}
+    location /node-monitor/ {
+        proxy_pass http://127.0.0.1:8833/;
+    }
+    # Directly serve static files, no need to run them through the app
+    location /node-monitor/static/ {
+        alias /var/lib/ff-node-monitor/src/static/;
+    }
     ```
 
     Now, accessing the service at whatever `root_url` you configured in the
