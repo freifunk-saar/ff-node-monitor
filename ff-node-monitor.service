@@ -1,0 +1,13 @@
+[Unit]
+Description=Node Monitoring Service
+Require=postgresql.service
+After=postgresql.service
+
+[Service]
+Environment=ROCKET_ENV=production
+WorkingDirectory=/var/lib/ff-node-monitor/src
+ExecStart=/var/lib/ff-node-monitor/src/target/release/ff-node-monitor
+User=ff-node-monitor
+
+[Install]
+WantedBy=multi-user.target
