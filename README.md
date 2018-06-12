@@ -26,7 +26,7 @@ the steps accordingly.
 2.  We need some development libraries for the build process:
 
     ```
-    sudo apt install libssl-dev libpq-dev
+    sudo apt install libssl-dev libpq-dev curl build-essential pkg-config
     ```
 
 3.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
@@ -43,7 +43,7 @@ the steps accordingly.
     ```
     sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git src
     cd src
-    sudo -u ff-node-monitor cargo build --release
+    sudo -u ff-node-monitor /var/lib/ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
 ### Database setup
