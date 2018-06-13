@@ -6,4 +6,5 @@ notifications:
     on_success: never
 
 script:
+- if [ "$TRAVIS_EVENT_TYPE" != CRON ]; then rustup default $(cat rust-version); fi
 - cargo build --locked
