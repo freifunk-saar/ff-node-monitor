@@ -18,9 +18,9 @@ use rocket::{
     Request,
     Outcome,
     State,
-    request::{Outcome as ReqOutcome, FromRequest},
+    request::{Outcome as ReqOutcome, FromRequest, FromFormValue},
     response::Responder,
-    http::Status,
+    http::{Status, RawStr},
 };
 use rocket_contrib::Template;
 
@@ -28,6 +28,8 @@ use failure::Error;
 use lettre_email;
 
 use config::Config;
+
+use std::ops::Deref;
 
 /// Module for serde "with" to use hex encoding to byte arrays
 pub mod hex_signing_key {
@@ -53,6 +55,39 @@ macro_rules! url_query {
             url
         }
     };
+}
+
+/// Type for email addresses in Rocket forms
+#[derive(Serialize)]
+pub struct EmailAddress(String);
+
+impl<'v> FromFormValue<'v> for EmailAddress {
+    type Error = Error;
+
+    fn from_form_value(v: &'v RawStr) -> Result<EmailAddress, Error> {
+        let s = v.url_decode()?;
+        {
+            let email_parts : Vec<&str> = s.split('@').collect();
+            if email_parts.len() != 2 {
+                bail!("Too many or two few @");
+            }
+            if email_parts[0].is_empty() {
+                bail!("User part is empty");
+            }
+            if email_parts[1].find('.').is_none() {
+                bail!("Domain part must contain .");
+            }
+        }
+        Ok(EmailAddress(s))
+    }
+}
+
+impl Deref for EmailAddress {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 /// Horribly hacky hack to get access to the Request, and then a template's body, for building emails

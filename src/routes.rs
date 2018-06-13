@@ -32,7 +32,7 @@ use db_conn::DbConn;
 use action::*;
 use models::*;
 use config::{Config, Renderer};
-use util::EmailBuilder;
+use util::{EmailAddress, EmailBuilder};
 use cron;
 
 #[get("/")]
@@ -42,7 +42,7 @@ fn index(renderer: Renderer) -> Result<Template, Error> {
 
 #[derive(Serialize, FromForm)]
 struct ListForm {
-    email: String,
+    email: EmailAddress,
 }
 
 #[get("/list?<form>")]
@@ -64,6 +64,11 @@ fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Erro
             "all_nodes": all_nodes,
         }))
     })
+}
+
+#[get("/list")]
+fn list_formfail(renderer: Renderer) -> Result<Template, Error> {
+    renderer.render("list_error", json!({}))
 }
 
 #[post("/prepare_action", data = "<action>")]
@@ -167,5 +172,5 @@ fn static_file(file: PathBuf) -> Result<Option<NamedFile>, Error> {
 }
 
 pub fn routes() -> Vec<::rocket::Route> {
-    routes![index, list, prepare_action, run_action, cron, static_file]
+    routes![index, list, list_formfail, prepare_action, run_action, cron, static_file]
 }
