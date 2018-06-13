@@ -46,6 +46,13 @@ the steps accordingly.
     sudo -u ff-node-monitor /var/lib/ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
+    If that fails, it is possible that the latest Rust nightly is incompatible
+    with one of the dependencies.  You can install a tested version using:
+
+    ```
+    sudo -u ff-node-monitor /var/lib/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
+    ```
+
 ### Database setup
 
 1.  *ff-node-monitor* needs PostgreSQL as a database backend:
