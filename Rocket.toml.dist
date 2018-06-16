@@ -21,7 +21,8 @@ postgres_url = "postgres://ff-node-monitor@/ff-node-monitor"
 action_signing_key = "..."
 
 [global]
-# The address and port on which ff-node-monitor will listen.
+# The address on which ff-node-monitor will listen.  Use "0.0.0.0" to listen on all interfaces.
+# Stick with "127.0.0.1" if you are running this behind a reverse proxy (recommended).
 address = "127.0.0.1"
 # The port must be at least 1024 because lower ports can only be opened by root, and you should
 # not run this service as root.
