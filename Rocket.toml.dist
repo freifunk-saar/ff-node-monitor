@@ -23,6 +23,8 @@ action_signing_key = "..."
 [global]
 # The address and port on which ff-node-monitor will listen.
 address = "127.0.0.1"
+# The port must be at least 1024 because lower ports can only be opened by root, and you should
+# not run this service as root.
 port = 8833
 # Secret key used by Rocket.  Generate this key with `openssl rand -base64 32`.
 secret_key = "..."
