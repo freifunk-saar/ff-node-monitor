@@ -65,7 +65,7 @@ the steps accordingly.
     need to create a database for the service:
 
     ```
-    sudo -u postgres psql -c 'CREATE ROLE "ff-node-monitor";'
+    sudo -u postgres psql -c 'CREATE ROLE "ff-node-monitor" WITH LOGIN;'
     sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor";'
     ```
 
