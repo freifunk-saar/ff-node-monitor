@@ -1,6 +1,6 @@
 [Unit]
 Description=Node Monitoring Service
-Require=postgresql.service
+Requires=postgresql.service
 After=postgresql.service
 
 [Service]
