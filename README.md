@@ -122,7 +122,7 @@ the steps accordingly.
     Add the following line to that crontab, replacing `$ROOT_URL` by your root URL:
 
     ```
-    */5 * * * *    curl $ROOT_URL/cron
+    */5 * * * *    curl $ROOT_URL:8833/cron
     ```
 
 That's it!  The service should now be running and working.
