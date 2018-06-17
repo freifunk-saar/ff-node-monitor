@@ -109,7 +109,7 @@ the steps accordingly.
     }
     ```
 
-    Now, accessing the service at whatever `root_url` you configured in the
+    Now, accessing the service at whatever `root` URL you configured in the
     `Rocket.toml` should work.
 
 4.  Finally, the service relies on a cron job to regularly check in on all the
@@ -119,7 +119,8 @@ the steps accordingly.
     sudo crontab -e -u ff-node-monitor
     ```
 
-    Add the following line to that crontab, replacing `$ROOT_URL` by your root URL:
+    Add the following line to that crontab, replacing `$ROOT_URL` by your `root` URL
+    (as configured in `Rocket.toml`):
 
     ```
     */5 * * * *    curl $ROOT_URL/cron
