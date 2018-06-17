@@ -8,9 +8,9 @@ email_from = "...@...freifunk.net"
 
 [global.ff-node-monitor.urls]
 # The root URL where you will be hosting ff-node-monitor.
-root = "https://..."
+root = "https://host/node-monitor"
 # The URL to the hopglass nodes.json file.
-nodes = "https://.../nodes.json"
+nodes = "https://host/path/nodes.json"
 
 [global.ff-node-monitor.secrets]
 # PostgreSQL credentials.  If you followed the instructions in the README, this
