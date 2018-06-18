@@ -26,9 +26,13 @@ h1 {
 }
 
 h2 {
-    font-size: 17pt;
+    font-size: 20pt;
     padding-top: 10px;
     padding-bottom: 15px;
+}
+
+h3 {
+    font-size: 17pt;
 }
 
 input[type="submit"] {
