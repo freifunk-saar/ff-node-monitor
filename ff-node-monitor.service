@@ -8,6 +8,7 @@ Environment=ROCKET_ENV=production
 WorkingDirectory=/var/lib/ff-node-monitor/src
 ExecStart=/var/lib/ff-node-monitor/src/target/release/ff-node-monitor
 User=ff-node-monitor
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
