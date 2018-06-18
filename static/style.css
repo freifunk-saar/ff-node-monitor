@@ -1,3 +1,45 @@
+body {
+    margin: 20px auto;
+    max-width: 600px;
+    padding: 0px 25px;
+    font-family: 'Open Sans', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 2;
+    color: #24292e;
+}
+
+select{
+    max-width:400px;
+}
+    
+h1, h2, h3 {
+    font-weight: 500;
+}
+
+h1, h2 {
+    border-bottom: 1px solid #eaecef;
+}
+
+h1 {
+    font-size: 23pt;
+    padding-bottom: 20px;
+}
+
+h2 {
+    font-size: 17pt;
+    padding-top: 10px;
+    padding-bottom: 15px;
+}
+
+input[type="submit"] {
+    background-color: #fff;
+    color: #000;
+    border-radius: 3px;
+    border: 2px solid #888;
+    font-size: 14pt;
+    cursor: pointer;
+}
+
 input[type=submit].link {
     border: none;
     background: none;
