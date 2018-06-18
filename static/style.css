@@ -8,8 +8,17 @@ body {
     color: #24292e;
 }
 
+input[id=node]{
+    width: 242px;
+}
+
+label[for=node]{
+    width: 190px;
+    display: inline-block;
+}
+
 select{
-    max-width:400px;
+    width: 450px;
 }
     
 h1, h2, h3 {
