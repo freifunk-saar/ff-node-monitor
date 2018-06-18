@@ -87,8 +87,8 @@ the steps accordingly.
 
     ```
     sudo cp ff-node-monitor.service /etc/systemd/system/
-    sudo systemctl enable ff-node-monitor.service
     sudo systemctl daemon-reload
+    sudo systemctl enable ff-node-monitor
     sudo systemctl start ff-node-monitor
     sudo systemctl status ff-node-monitor
     ```
