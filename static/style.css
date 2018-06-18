@@ -9,7 +9,7 @@ body {
 }
 
 input[id=node]{
-    width: 222px;
+    width: 220px;
 }
 
 label[for=node]{
