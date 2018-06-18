@@ -19,8 +19,8 @@ the steps accordingly.
 1.  First, let's create a user for this service, and change to its home directory:
 
     ```
-    sudo adduser ff-node-monitor --home /var/lib/ff-node-monitor --system
-    cd /var/lib/ff-node-monitor
+    sudo adduser ff-node-monitor --home /opt/ff-node-monitor --system
+    cd /opt/ff-node-monitor
     ```
 
 2.  We need some development libraries for the build process:
@@ -43,14 +43,14 @@ the steps accordingly.
     ```
     sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git src
     cd src
-    sudo -u ff-node-monitor /var/lib/ff-node-monitor/.cargo/bin/cargo build --release
+    sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
     If that fails, it is possible that the latest Rust nightly is incompatible
     with one of the dependencies.  You can install a tested version using:
 
     ```
-    sudo -u ff-node-monitor /var/lib/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
+    sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
     ```
 
 ### Database setup
@@ -75,7 +75,7 @@ the steps accordingly.
     directory.  You can start by copying the template:
 
     ```
-    cd /var/lib/ff-node-monitor/src
+    cd /opt/ff-node-monitor/src
     sudo -u ff-node-monitor cp Rocket.toml.dist Rocket.toml
     chmod 600 Rocket.toml
     ```
@@ -106,7 +106,7 @@ the steps accordingly.
     }
     # Directly serve static files, no need to run them through the app
     location /node-monitor/static/ {
-        alias /var/lib/ff-node-monitor/src/static/;
+        alias /opt/ff-node-monitor/src/static/;
     }
     ```
 
