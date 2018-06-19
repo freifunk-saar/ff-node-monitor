@@ -45,6 +45,8 @@ pub struct Urls {
     pub root: Url,
     #[serde(with = "url_serde")]
     pub nodes: Url,
+    #[serde(with = "url_serde")]
+    pub sources: Url,
 }
 
 #[derive(Deserialize)]
