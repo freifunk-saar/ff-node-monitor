@@ -21,18 +21,18 @@ h1, h2 {
 }
 
 h1 {
-    font-size: 23pt;
+    font-size: 200%;
     padding-bottom: 20px;
 }
 
 h2 {
-    font-size: 20pt;
+    font-size: 170%;
     padding-top: 10px;
     padding-bottom: 15px;
 }
 
 h3 {
-    font-size: 17pt;
+    font-size: 150%;
 }
 
 input[type="submit"] {
@@ -59,4 +59,10 @@ input[type=submit].link {
 
 .node .offline, .node .gone {
     color: red;
+}
+
+#footer {
+    padding-top: 3em;
+    text-align: center;
+    font-size: 80%;
 }
