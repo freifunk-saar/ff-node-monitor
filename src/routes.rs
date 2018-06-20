@@ -20,7 +20,7 @@ use rocket_contrib::Template;
 
 use diesel::prelude::*;
 use failure::Error;
-use lettre::{EmailTransport, SmtpTransport};
+use lettre::EmailTransport;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
@@ -100,7 +100,7 @@ fn prepare_action(
     let email = email_builder.new(email_template)?
         .to(action.email.as_str())
         .build()?;
-    let mut mailer = SmtpTransport::builder_unencrypted_localhost()?.build();
+    let mut mailer = email_builder.mailer()?;
     mailer.send(&email)?;
 
     // Render

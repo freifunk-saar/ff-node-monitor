@@ -20,7 +20,7 @@ use failure::Error;
 use serde_json;
 use reqwest;
 use diesel;
-use lettre::{EmailTransport, SmtpTransport};
+use lettre::EmailTransport;
 
 use std::collections::HashMap;
 
@@ -182,7 +182,7 @@ pub fn update_nodes(
 
     // Send out notifications (not in the transaction as we don't really care here -- also
     // we have an external side-effect, the email, which we cannot roll back anyway)
-    let mut mailer = SmtpTransport::builder_unencrypted_localhost()?.build();
+    let mut mailer = email_builder.mailer()?;
     for (id, cur_data) in changed.into_iter() {
         // See who monitors this node
         let watchers = {

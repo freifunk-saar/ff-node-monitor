@@ -26,6 +26,7 @@ use rocket_contrib::Template;
 
 use failure::Error;
 use lettre_email;
+use lettre::smtp::SmtpTransport;
 
 use config::Config;
 
@@ -133,5 +134,10 @@ impl<'a, 'r> EmailBuilder<'a, 'r> {
             .from((self.config.ui.email_from.as_str(), email_from))
             .subject(email_subject)
             .text(email_body))
+    }
+
+    /// Construct a mailer
+    pub fn mailer(&self) -> Result<SmtpTransport, Error> {
+        Ok(SmtpTransport::builder_unencrypted_localhost()?.build())
     }
 }
