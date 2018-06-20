@@ -26,7 +26,7 @@ use rocket_contrib::Template;
 
 use failure::Error;
 use lettre_email;
-use lettre::smtp::SmtpTransport;
+use lettre::smtp::{SMTP_PORT, SmtpTransport, SmtpTransportBuilder, ClientSecurity};
 
 use config::Config;
 
@@ -138,6 +138,8 @@ impl<'a, 'r> EmailBuilder<'a, 'r> {
 
     /// Construct a mailer
     pub fn mailer(&self) -> Result<SmtpTransport, Error> {
-        Ok(SmtpTransport::builder_unencrypted_localhost()?.build())
+        let host = self.config.secrets.smtp_host.as_ref()
+            .map(String::as_str).unwrap_or("localhost");
+        Ok(SmtpTransportBuilder::new((host, SMTP_PORT), ClientSecurity::None)?.build())
     }
 }

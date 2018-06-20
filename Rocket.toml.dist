@@ -1,9 +1,7 @@
 [global.ff-node-monitor.ui]
 # The name of your Freifunk community.
 instance_name = "Freifunk ..."
-# The sender address of the emails that are sent by ff-node-monitor.  Make sure
-# you have a mail service running locally that is set up to deliver emails from
-# that address.
+# The sender address of the emails that are sent by ff-node-monitor.
 email_from = "...@...freifunk.net"
 
 [global.ff-node-monitor.urls]
@@ -22,6 +20,9 @@ postgres_url = "postgres://ff-node-monitor@/ff-node-monitor"
 # Key used to sign data for confirmation emails.  Generate this key with
 # `openssl rand -hex 32`.
 action_signing_key = "..."
+# Optional: Host to submit emails to.  That host must accept email with arbitrary destination
+# from this service.
+#smtp_host = "localhost"
 
 [global]
 # The address on which ff-node-monitor will listen.  Use "0.0.0.0" to listen on all interfaces.
