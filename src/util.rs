@@ -138,8 +138,7 @@ impl<'a, 'r> EmailBuilder<'a, 'r> {
 
     /// Construct a mailer
     pub fn mailer(&self) -> Result<SmtpTransport, Error> {
-        let host = self.config.secrets.smtp_host.as_ref()
-            .map(String::as_str).unwrap_or("localhost");
+        let host = self.config.secrets.get_smtp_host();
         Ok(SmtpTransportBuilder::new((host, SMTP_PORT), ClientSecurity::None)?.build())
     }
 }

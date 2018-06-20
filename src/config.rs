@@ -57,6 +57,13 @@ pub struct Secrets {
     pub action_signing_key: hmac::SigningKey,
 }
 
+impl Secrets {
+    /// Getters for default values
+    pub fn get_smtp_host(&self) -> &str {
+        self.smtp_host.as_ref().map(String::as_str).unwrap_or("localhost")
+    }
+}
+
 #[derive(Deserialize)]
 pub struct Config {
     pub ui: Ui,
