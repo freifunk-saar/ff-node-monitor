@@ -131,6 +131,6 @@ That's it!  The service should now be running and working.
 
 ### Integration
 
-To integrate this service into an existing website, the easyest way is to implement it as an `iframe`:
+To integrate this service into an existing website, the easiest way is to implement it as an `iframe`:
 
     <iframe src="/node-monitor/" style="width:600px; height:500px; border:0"></iframe>
