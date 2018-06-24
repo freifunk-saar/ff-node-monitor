@@ -7,10 +7,6 @@ body {
     line-height: 1.5;
     color: #24292e;
 }
-
-select{
-    max-width:400px;
-}
     
 h1, h2, h3 {
     font-weight: 500;
@@ -35,23 +31,13 @@ h3 {
     font-size: 150%;
 }
 
-input[type="submit"] {
-    background-color: #fff;
-    color: #000;
-    border-radius: 3px;
-    border: 2px solid #888;
-    font-size: 14pt;
-    cursor: pointer;
+#footer {
+    padding-top: 3em;
+    text-align: center;
+    font-size: 80%;
 }
 
-input[type=submit].link {
-    border: none;
-    background: none;
-    display: inline;
-    color: blue;
-    text-decoration: underline;
-    cursor: pointer;
-}
+/* List page */
 
 .node .online {
     color: green;
@@ -61,8 +47,36 @@ input[type=submit].link {
     color: red;
 }
 
-#footer {
-    padding-top: 3em;
-    text-align: center;
-    font-size: 80%;
+
+input[type="submit"] {
+    background-color: #fff;
+    color: #000;
+    border-radius: 3px;
+    border: 2px solid #888;
+    font-size: 14pt;
+    cursor: pointer;
+    margin: 2px 0;
+}
+
+input[type="submit"].link {
+    border: none;
+    background: none;
+    display: inline;
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.formgrid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-column-gap: 5px;
+    align-items: center;
+}
+
+.fieldgrid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    grid-column-gap: 5px;
 }

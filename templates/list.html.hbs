@@ -45,24 +45,41 @@
   {{/each}}
 
   <h3>Knoten hinzufügen</h3>
-  <form method="post" action="prepare_action">
-    <input type="hidden" name="email" value="{{form.email}}">
-    <input type="hidden" name="op" value="add">
-    Knoten-ID manuell eingeben: <input type="text" name="node">
-    <input type="submit" value="Hinzufügen">
-  </form>
-  <br>
-  <form method="post" action="prepare_action">
-    <input type="hidden" name="email" value="{{form.email}}">
-    <input type="hidden" name="op" value="add">
-    Knotennamen aus Liste auswählen:
-    <select name="node">
-      {{#each all_nodes}}
-        <option value="{{this.id}}">{{this.name}} ({{this.id}})</option>
-      {{/each}}
-    </select>
-    <input type="submit" value="Hinzufügen">
-  </form>
-  Wenn dein Knoten gerade neu ist und nocht nicht in der Liste auftaucht, versuche es in ein paar Minuten erneut.
+  <div class="formgrid">
+    <div class="fieldgrid">
+      <div>Knoten-ID manuell eingeben:</div>
+      <div style="padding-right: 20px;">
+        <input type="text" name="node" form="manual-id-form" style="width: 100%">
+      </div>
+    </div>
+    <div class="button">
+      <form method="post" action="prepare_action" id="manual-id-form">
+        <input type="hidden" name="email" value="{{form.email}}">
+        <input type="hidden" name="op" value="add">
+        <input type="submit" value="Hinzufügen">
+      </form>
+    </div>
+    <div style="grid-column: span 2; padding-top: 1.5em;"></div>
+    <div>
+      <div>Knotennamen aus Liste auswählen:</div>
+      <div>
+        <select name="node" form="list-id-form" style="width:100%;">
+          {{#each all_nodes}}
+            <option value="{{this.id}}">{{this.name}} ({{this.id}})</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
+    <div class="button" style="align-self: end">
+      <form method="post" action="prepare_action" id="list-id-form">
+        <input type="hidden" name="email" value="{{form.email}}">
+        <input type="hidden" name="op" value="add">
+        <input type="submit" value="Hinzufügen">
+      </form>
+    </div>
+    <div style="grid-column: span 2">
+      Wenn dein Knoten gerade neu ist und nocht nicht in der Liste auftaucht, versuche es in ein paar Minuten erneut.
+    </div>
+  </div>
 {{~/inline}}
 {{~> partials/page }}
