@@ -20,6 +20,9 @@
   <head>
     <title>{{> title}}</title>
     <link rel="stylesheet" href="{{config.urls.root}}static/style.css">
+    {{~# if config.urls.stylesheet }}
+    <link rel="stylesheet" href="{{config.urls.stylesheet}}">
+    {{~/if}}
   </head>
   <body>
     <div id="title"><h1>{{> title}}</h1></div>

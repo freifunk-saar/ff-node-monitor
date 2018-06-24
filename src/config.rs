@@ -47,6 +47,7 @@ pub struct Urls {
     pub nodes: Url,
     #[serde(with = "url_serde")]
     pub sources: Url,
+    pub stylesheet: Option<String>,
 }
 
 #[derive(Deserialize)]
