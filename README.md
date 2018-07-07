@@ -134,3 +134,9 @@ That's it!  The service should now be running and working.
 To integrate this service into an existing website, the easiest way is to implement it as an `iframe`:
 
     <iframe src="/node-monitor/" style="width:600px; height:500px; border:0"></iframe>
+    
+ ### Data analysis
+ 
+ Once the service is running, you can see all running monitoring events in the database with
+ 
+     sudo -u postgres psql --dbname=ff-node-monitor -c "select email,m.id,name,online from monitors m, nodes n where m.id=n.id;"  
