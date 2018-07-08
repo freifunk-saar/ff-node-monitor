@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "debian/stretch64"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize ["modifyvm", :id, "--memory", "512"]
+  end
+
+  config.vm.define "ff-service" do |t|
+    t.vm.hostname = "ff-services"
+    t.vm.network "private_network",ip: "10.19.0.2", netmask: "255.255.0.0"
+    t.vm.provision :shell, path: "bootstrap.sh"
+    # this would only work as root:
+    # t.vm.network :forwarded_port, guest: 8833, host: 80
+  end
+  
+  # disable automatic update check:
+  config.vm.box_check_update = false
+  
+  # make sure that guest additions is already installed with:
+  # vagrant plugin install vagrant-vbguest
+  # strange, not working:
+  # config.vm.synced_folder "../", "/opt/ff-node-monitor"
+
+end

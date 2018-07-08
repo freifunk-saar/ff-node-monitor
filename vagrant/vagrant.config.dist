@@ -1,0 +1,19 @@
+# Copy this file to `vagrant.config` and change values to keep them oer a `git pull`
+
+# The name of your Freifunk community.
+INSTANCE_NAME="Freifunk Alpha Centauri"
+
+# The sender address of the emails that are sent by ff-node-monitor.
+EMAIL_FROM="freifunk@alpha-centauri.mw"
+
+# The URL to the hopglass nodes.json file.
+NODES_URL="https://map.freifunk.in-kiel.de/yanic/nodes.json"
+
+# The port to listen on
+PORT=8833
+
+# The root URL where you will be hosting ff-node-monitor.
+ROOT_URL="http://localhost:$PORT"
+
+# URL the service will be available from the outside (external IP)
+EXTERNAL="10.19.0.2"
