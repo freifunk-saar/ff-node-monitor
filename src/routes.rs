@@ -88,8 +88,11 @@ fn prepare_action(
     config: State<Config>,
     renderer: Renderer,
     email_builder: EmailBuilder,
+    db: DbConn,
 ) -> Result<Template, Error>
 {
+    use schema::*;
+
     let action = action.into_inner();
 
     // obtain bytes for signed action payload
@@ -97,13 +100,34 @@ fn prepare_action(
     let signed_action = serialize_to_vec(&signed_action)?;
     let signed_action = base64::encode(&signed_action);
 
-    // Generate email text
+    // compute some URLs
     let action_url = url_query!(config.urls.root.join("run_action")?,
         signed_action = signed_action);
     let list_url = url_query!(config.urls.root.join("list")?,
         email = action.email);
+
+    // obtain user-readable node name
+    let node = nodes::table
+        .find(action.node.as_str())
+        .first::<NodeQuery>(&*db).optional()?;
+    let node_name = match node {
+        Some(node) => node.name,
+        None if action.op == Operation::Remove =>
+            // Allow removing dead nodes
+            action.node.clone(),
+        None => {
+            // Trying to add a non-existing node. Stop this.
+            return renderer.render("prepare_action_error", json!({
+                "action": action,
+                "list_url": list_url.as_str(),
+            }));
+        }
+    };
+
+    // Generate email text
     let email_template = renderer.render("confirm_action", json!({
         "action": action,
+        "node_name": node_name,
         "action_url": action_url.as_str(),
         "list_url": list_url.as_str(),
     }))?;
@@ -119,6 +143,7 @@ fn prepare_action(
         email = action.email);
     renderer.render("prepare_action", json!({
         "action": action,
+        "node_name": node_name,
         "list_url": list_url.as_str(),
     }))
 }
@@ -144,7 +169,7 @@ fn run_action(
     let action = match action {
         Ok(a) => a,
         Err(_) => {
-            return renderer.render("action_error", json!({}))
+            return renderer.render("run_action_error", json!({}))
         }
     };
 

@@ -84,14 +84,7 @@ impl Action {
         db.transaction::<_, Error, _>(|| {
             Ok(match self.op {
                 Operation::Add => {
-                    // Check if the node ID even exists
-                    let node = nodes::table
-                        .find(self.node.as_str())
-                        .first::<NodeQuery>(db).optional()?;
-                    if node.is_none() {
-                        return Ok(false);
-                    }
-                    // Add it
+                    // Add node.  We are fine if it does not exist.
                     let r = diesel::insert_into(monitors::table)
                         .values(&m)
                         .execute(db);
