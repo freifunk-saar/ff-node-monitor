@@ -26,6 +26,7 @@ use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
 
 use std::path::{Path, PathBuf};
+use std::collections::HashSet;
 use std::io;
 
 use db_conn::DbConn;
@@ -55,9 +56,19 @@ fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Erro
             .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
             .order_by(monitors::id)
             .load::<(MonitorQuery, Option<NodeQuery>)>(&*db)?;
-        let all_nodes = nodes::table
-            .order_by(nodes::name)
-            .load::<NodeQuery>(&*db)?;
+        let all_nodes : Vec<NodeQuery> = {
+            let watched_node_ids : HashSet<&str> = watched_nodes.iter()
+                .filter_map(|node| node.1.as_ref())
+                .map(|node| node.id.as_str())
+                .collect();
+            // Diesel does not support joining to a subquery to we have to do the filtering in Rust
+            nodes::table
+                .order_by(nodes::name)
+                .load::<NodeQuery>(&*db)?
+                .into_iter()
+                .filter(|node| !watched_node_ids.contains(&node.id.as_ref()))
+                .collect()
+        };
         renderer.render("list", json!({
             "form": form,
             "watched_nodes": watched_nodes,
