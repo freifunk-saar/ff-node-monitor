@@ -4,14 +4,19 @@
 set -xe
 export DEBIAN_FRONTEND=noninteractive
 
-WORKING_DIR="`pwd`"/"`dirname "$0"`"
-
-if [ -z "${WORKING_DIR##*/home/travis/build/*}" ] ;then
-  echo "The Workingdir '$WORKING_DIR' contains substring: '/home/travis/build/'."
-  IS_TRAVIS=1
+IS_VAGRANT=0
+IS_TRAVIS=0
+if [ "$0" == "/tmp/vagrant-shell" ]; then
+  WORKING_DIR="/vagrant"
+  IS_VAGRANT=1
 else
-  IS_TRAVIS=0
+  WORKING_DIR="`pwd`"/"`dirname "$0"`"
+  if [ -z "${WORKING_DIR##*/home/travis/build/*}" ] ;then
+    echo "The Workingdir '$WORKING_DIR' contains substring: '/home/travis/build/'."
+    IS_TRAVIS=1
+  fi
 fi
+
 
 : "#### include default config or user config, that is in .gitignore:"
 if [ -f "$WORKING_DIR"/vagrant.config ]; then
@@ -20,9 +25,19 @@ else
   source "$WORKING_DIR"/vagrant.config.dist
 fi
 
-: "#### some variables used in this script"
+# some variables used in this script
+
+# URL the service will be available from the outside (external IP)
+# this must match the actual IP handed out by Vagrant
+# TODO: maybe determine that IP in the script somehow
+EXTERNAL="10.19.0.2"
+
+ROOT_URL="http://localhost:$PORT"
+
 WEB_URL="http://$EXTERNAL:$PORT"
+
 HOME_PATH='/opt/ff-node-monitor'
+
 FFNM_USERNAME="ff-node-monitor"
 
 : "#### We need some development libraries for the build process:"
@@ -106,11 +121,8 @@ sudo systemctl status ff-node-monitor
 : "#### Finally, the service relies on a cron job to regularly check in on all the nodes and send notifications when their status changed:"
 (sudo crontab -u $FFNM_USERNAME -l; echo "*/5 * * * *    curl $ROOT_URL/cron" ) | sudo crontab -u $FFNM_USERNAME -
 
-if [ IS_TRAVIS == "1" ]; then
-  exit 0
-fi
-
 : "#### read node data initially:"
+sleep 10
 $ffsudo curl $ROOT_URL/cron
 
 echo "The site should now be reacheable under $WEB_URL"

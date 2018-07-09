@@ -1,4 +1,4 @@
-# Copy this file to `vagrant.config` and change values to keep them oer a `git pull`
+# Copy this file to `vagrant.config` and change values to keep them over a `git pull`
 
 # The name of your Freifunk community.
 INSTANCE_NAME="Freifunk Alpha Centauri"
@@ -11,9 +11,3 @@ NODES_URL="https://map.freifunk.in-kiel.de/yanic/nodes.json"
 
 # The port to listen on
 PORT=8833
-
-# The root URL where you will be hosting ff-node-monitor.
-ROOT_URL="http://localhost:$PORT"
-
-# URL the service will be available from the outside (external IP)
-EXTERNAL="10.19.0.2"
