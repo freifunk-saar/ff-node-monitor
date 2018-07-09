@@ -69,6 +69,9 @@ the steps accordingly.
     sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor" LC_COLLATE = "de_DE.UTF-8" TEMPLATE template0;'
     ```
 
+    You may have to install the `de_DE.UTF-8` locale before this works.  On
+    Debian, run `sudo dpkg-reconfigure locales` to do so.
+
 ### Service setup
 
 1.  The service loads its configuration from a `Rocket.toml` file in the source
