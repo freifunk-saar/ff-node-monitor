@@ -41,7 +41,7 @@ HOME_PATH='/opt/ff-node-monitor'
 FFNM_USERNAME="ff-node-monitor"
 
 : "#### We need some development libraries for the build process:"
-sudo apt update && sudo apt -y install git curl gcc pkg-config libssl-dev libpq-dev ssmtp
+sudo apt update && sudo apt -y install git curl gcc pkg-config libssl-dev libpq-dev ssmtp locales-all
 
 : "#### create a user for this service, and change to its home directory:"
 sudo adduser $FFNM_USERNAME --home "$HOME_PATH" --system
@@ -65,7 +65,7 @@ $ffsudo "$HOME_PATH/.cargo/bin/cargo" build --release
 : "#### Database setup"
 apt -y install postgresql
 sudo -u postgres psql -c 'CREATE ROLE "'$FFNM_USERNAME'" WITH LOGIN;' 
-sudo -u postgres psql -c 'CREATE DATABASE "'$FFNM_USERNAME'" WITH OWNER = "'$FFNM_USERNAME'";'
+sudo -u postgres psql -c 'CREATE DATABASE "'$FFNM_USERNAME'" WITH OWNER = "'$FFNM_USERNAME'" LC_COLLATE = "de_DE.UTF-8" TEMPLATE template0;'
 
 : "#### Service setup"
 : "#### The service loads its configuration from a Rocket.toml file in the source directory. You can start by copying the template"
