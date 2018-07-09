@@ -58,7 +58,7 @@ the steps accordingly.
 1.  *ff-node-monitor* needs PostgreSQL as a database backend:
 
     ```
-    sudo apt install postgresql
+    sudo apt install postgresql locales-all
     ```
 
 2.  We will use the `ff-node-monitor` system user to access PostgreSQL, and we
