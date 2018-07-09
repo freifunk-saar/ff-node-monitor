@@ -66,7 +66,7 @@ the steps accordingly.
 
     ```
     sudo -u postgres psql -c 'CREATE ROLE "ff-node-monitor" WITH LOGIN;'
-    sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor";'
+    sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor" LC_COLLATE = "de_DE.UTF-8" TEMPLATE template0;'
     ```
 
 ### Service setup
