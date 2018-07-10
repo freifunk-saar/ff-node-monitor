@@ -132,7 +132,20 @@ the steps accordingly.
 
 That's it!  The service should now be running and working.
 
-### Integration
+## Upgrade
+
+Upgrade the service to the latest git version with these steps:
+
+```
+cd /opt/ff-node-monitor/src/
+git pull
+sudo rm target/release/ff-node-monitor
+sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
+sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
+sudo systemctl restart ff-node-monitor
+```
+
+## Integration
 
 To integrate this service into an existing website, the easiest way is to implement it as an `iframe`:
 
