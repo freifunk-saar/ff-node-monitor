@@ -66,7 +66,7 @@ the steps accordingly.
 
     ```
     sudo -u postgres psql -c 'CREATE ROLE "ff-node-monitor" WITH LOGIN;'
-    sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor" LC_COLLATE = "de_DE.UTF-8" TEMPLATE template0;'
+    sudo -u postgres psql -c 'CREATE DATABASE "ff-node-monitor" WITH OWNER = "ff-node-monitor" LC_COLLATE = "de_DE.utf8" TEMPLATE template0;'
     ```
 
     You may have to install the `de_DE.UTF-8` locale before this works.  On
