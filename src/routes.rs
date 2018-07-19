@@ -132,7 +132,7 @@ fn prepare_action(
         "list_url": list_url.as_str(),
     }))?;
     // Build and send email
-    let email = email_builder.new(email_template)?
+    let email = email_builder.email(email_template)?
         .to(action.email.as_str())
         .build()?;
     let mut mailer = email_builder.mailer()?;

@@ -85,7 +85,7 @@ pub fn fairing(section: &'static str) -> impl Fairing {
     AdHoc::on_attach(move |rocket| {
         let config = {
             let config_table = rocket.config().get_table(section)
-                .expect(format!("[{}] table in Rocket.toml missing or not a table", section).as_str());
+                .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
             Config::new(config_table)
         };
         Ok(rocket

@@ -60,8 +60,7 @@ pub struct SignedAction {
 impl Action {
     fn compute_signature(&self, key: &hmac::SigningKey) -> hmac::Signature {
         let buf = serialize_to_vec(self).expect("failed to encode Action");
-        let signature = hmac::sign(&key, buf.as_slice());
-        signature
+        hmac::sign(&key, buf.as_slice())
     }
 
     fn verify_signature(

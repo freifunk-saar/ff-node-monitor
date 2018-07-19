@@ -201,7 +201,7 @@ pub fn update_nodes(
                 "list_url": list_url.as_str(),
             }))?;
             // Build and send email
-            let email = email_builder.new(email_template)?
+            let email = email_builder.email(email_template)?
                 .to(watcher.email.as_str())
                 .build()?;
             mailer.send(&email)?;

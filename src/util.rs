@@ -41,7 +41,7 @@ pub mod hex_signing_key {
     pub fn deserialize<'de, D>(deserializer: D) -> Result<hmac::SigningKey, D::Error>
         where D: Deserializer<'de>
     {
-         let bytes = hex::decode(String::deserialize(deserializer)?).map_err(|e| Error::custom(e))?;
+         let bytes = hex::decode(String::deserialize(deserializer)?).map_err(Error::custom)?;
          Ok(hmac::SigningKey::new(&digest::SHA256, bytes.as_slice()))
     }
 }
@@ -123,7 +123,7 @@ impl<'a, 'r> EmailBuilder<'a, 'r> {
     }
 
     /// Begin building an email from a template
-    pub fn new(&self, email_template: Template) -> Result<lettre_email::EmailBuilder, Error> {
+    pub fn email(&self, email_template: Template) -> Result<lettre_email::EmailBuilder, Error> {
         let email_text = self.responder_body(email_template)?;
         let email_parts : Vec<&str> = email_text.splitn(4, '\n').collect();
         let (empty, email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2], email_parts[3]);

@@ -17,6 +17,12 @@
 #![feature(plugin, crate_visibility_modifier, custom_derive, catch_expr)]
 #![plugin(rocket_codegen)]
 
+// Diesel macros generate warnings
+#![allow(proc_macro_derive_resolution_fallback)]
+
+// Clippy is a bit overzealous
+#![allow(needless_pass_by_value, explicit_iter_loop, explicit_into_iter_loop)]
+
 extern crate rocket;
 extern crate rocket_contrib;
 extern crate r2d2;
