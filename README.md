@@ -144,9 +144,3 @@ sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rus
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
 sudo systemctl restart ff-node-monitor
 ```
-
-## Integration
-
-To integrate this service into an existing website, the easiest way is to implement it as an `iframe`:
-
-    <iframe src="/node-monitor/" style="width:600px; height:500px; border:0"></iframe>
