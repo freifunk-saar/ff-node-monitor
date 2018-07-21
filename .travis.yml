@@ -7,4 +7,4 @@ notifications:
 
 script:
 - if [ "$TRAVIS_EVENT_TYPE" != cron ]; then rustup default $(cat rust-version); fi
-- cargo build --locked
+- RUSTFLAGS="-D warnings" cargo build --locked
