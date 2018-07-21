@@ -139,6 +139,9 @@ Upgrade the service to the latest git version with these steps:
 ```
 cd /opt/ff-node-monitor/src/
 git pull
+# eventually add new values in the config. I.e. check and edit with vimdiff
+# (CTRL+w+Arrows=change pane, yy=copy line, p=paste line):
+vimdiff Rocket.toml Rocket.toml.dist
 sudo rm target/release/ff-node-monitor
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
