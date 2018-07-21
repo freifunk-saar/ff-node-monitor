@@ -36,6 +36,7 @@ use util;
 #[derive(Serialize, Deserialize)]
 pub struct Ui {
     pub instance_name: String,
+    pub instance_article_dative: String,
     pub email_from: String,
 }
 

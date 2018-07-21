@@ -17,9 +17,9 @@
 
 // First line is user-visible From, second line Subject, the rest the email body.
 }}
-{{{config.ui.instance_name}}} Knotenüberwachung
-{{{config.ui.instance_name}}} Knotenüberwachung: {{{node.name}}} ist {{#if node.online}}wieder online{{else}}OFFLINE{{/if}}
-Dies ist eine Meldung von der {{{config.ui.instance_name}}} Knotenüberwachung:
+{{{config.ui.instance_name}}}
+{{{config.ui.instance_name}}}: {{{node.name}}} ist {{#if node.online}}wieder online{{else}}OFFLINE{{/if}}
+Dies ist eine Meldung von {{config.ui.instance_article_dative}} {{{config.ui.instance_name}}}:
 {{{node.name}}} ({{{node.id}}}) ist {{#if node.online}}wieder online{{else}}OFFLINE{{/if}}.
 
 Du kannst die Überwachung unter {{{list_url}}} konfigurieren.
