@@ -3,7 +3,7 @@ body {
     max-width: 600px;
     padding: 0px 25px;
     font-family: 'Open Sans', Arial, sans-serif;
-    font-size: 14px;
+    font-size: 12pt;
     line-height: 1.5;
     color: #24292e;
 }
@@ -37,7 +37,7 @@ h3 {
     font-size: 80%;
 }
 
-/* List page */
+/** List page */
 
 .node .online {
     color: green;
@@ -47,15 +47,54 @@ h3 {
     color: red;
 }
 
-
-input[type="submit"] {
-    background-color: #fff;
+input, select,
+.chosen-container-single .chosen-single,
+.chosen-container-active.chosen-with-drop .chosen-single {
+    background: #fff;
+    height: 25px;
+    display: block;
+    box-sizing: content-box;
     color: #000;
     border-radius: 3px;
     border: 2px solid #888;
     font-size: 14pt;
-    cursor: pointer;
     margin: 2px 0;
+    padding: 1px 8px;
+}
+
+.chosen-container-active.chosen-with-drop .chosen-single {
+    border: 2px solid #888;
+    border-bottom: none;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    background: #fff;
+    padding-bottom: 3px; /* in exchange for the border */
+}
+.chosen-container-active.chosen-with-drop .chosen-drop {
+    margin-top: -2px; /* avoid gap */
+    border: 2px solid #888;
+    border-top: none;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    background: #fff;
+}
+
+/* Chosen sprites */
+.chosen-container-single .chosen-single div {
+    padding-top: 2px;
+}
+.chosen-container-single .chosen-single abbr{
+    top: 8px;
+    right: 22px;
+}
+
+input[type="submit"] {
+    cursor: pointer;
+}
+
+input[disabled=""] {
+    color: #AAA;
+    border-color: #CCC;
 }
 
 input[type="submit"].link {

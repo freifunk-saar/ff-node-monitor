@@ -48,22 +48,21 @@
   <div class="formgrid">
     <div class="fieldgrid">
       <div>Knoten-ID manuell eingeben:</div>
-      <div style="padding-right: 20px;">
-        <input type="text" name="node" form="manual-id-form" style="width: 100%">
-      </div>
+      <input type="text" name="node" form="manual-form" id="manual-node">
     </div>
     <div class="button">
-      <form method="post" action="prepare_action" id="manual-id-form">
+      <form method="post" action="prepare_action" id="manual-form">
         <input type="hidden" name="email" value="{{form.email}}">
         <input type="hidden" name="op" value="add">
-        <input type="submit" value="Hinzufügen">
+        <input type="submit" id="manual-form-submit" value="Hinzufügen">
       </form>
     </div>
     <div style="grid-column: span 2; padding-top: 1.5em;"></div>
     <div>
       <div>Knotennamen aus Liste auswählen:</div>
       <div>
-        <select name="node" form="list-id-form" style="width:100%;">
+        <select name="node" id="list-node" form="list-form" style="width:100%;" data-placeholder="Knoten auswählen...">
+          <option disabled selected></option>
           {{#each all_nodes}}
             <option value="{{this.id}}">{{this.name}} ({{this.id}})</option>
           {{/each}}
@@ -71,15 +70,36 @@
       </div>
     </div>
     <div class="button" style="align-self: end">
-      <form method="post" action="prepare_action" id="list-id-form">
+      <form method="post" action="prepare_action" id="list-form">
         <input type="hidden" name="email" value="{{form.email}}">
         <input type="hidden" name="op" value="add">
-        <input type="submit" value="Hinzufügen">
+        <input type="submit" id="list-form-submit" value="Hinzufügen">
       </form>
     </div>
     <div style="grid-column: span 2">
       Wenn dein Knoten gerade neu ist und nocht nicht in der Liste auftaucht, versuche es in ein paar Minuten erneut.
     </div>
   </div>
+  <script src="{{config.urls.root}}static/jquery-3.3.1.min.js" type="text/javascript"></script>
+  <script src="{{config.urls.root}}static/chosen-1.8.7/chosen.jquery.min.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    function is_good_str(s) {
+      return s != null && s != "";
+    }
+    function upd_submit_buttons() {
+      $('#manual-form-submit').prop('disabled', !is_good_str($("#manual-node").val()));
+      $('#list-form-submit').prop('disabled', !is_good_str($("#list-node").val()));
+    }
+
+    $(document).ready(function() {
+      $("#list-node").chosen({
+        search_contains: true,
+        allow_single_deselect: true,
+        no_results_text: "Kein Knoten gefunden für",
+      }).change(upd_submit_buttons);
+      $("#manual-node").on('input', upd_submit_buttons);
+      upd_submit_buttons();
+    });
+  </script>
 {{~/inline}}
 {{~> partials/page }}
