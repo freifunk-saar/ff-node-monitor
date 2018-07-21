@@ -1,6 +1,6 @@
 body {
     margin: 20px auto;
-    max-width: 600px;
+    max-width: 660px;
     padding: 0px 25px;
     font-family: 'Open Sans', Arial, sans-serif;
     font-size: 12pt;
@@ -37,14 +37,20 @@ h3 {
     font-size: 80%;
 }
 
-/** List page */
+/** Forms */
 
-.node .online {
-    color: green;
+.formgrid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-column-gap: 5px;
+    align-items: center;
 }
 
-.node .offline, .node .gone {
-    color: red;
+.fieldgrid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    grid-column-gap: 5px;
 }
 
 input, select,
@@ -52,7 +58,6 @@ input, select,
 .chosen-container-active.chosen-with-drop .chosen-single {
     background: #fff;
     height: 25px;
-    display: block;
     box-sizing: content-box;
     color: #000;
     border-radius: 3px;
@@ -79,15 +84,6 @@ input, select,
     background: #fff;
 }
 
-/* Chosen sprites */
-.chosen-container-single .chosen-single div {
-    padding-top: 2px;
-}
-.chosen-container-single .chosen-single abbr{
-    top: 8px;
-    right: 22px;
-}
-
 input[type="submit"] {
     cursor: pointer;
 }
@@ -97,6 +93,26 @@ input[disabled=""] {
     border-color: #CCC;
 }
 
+/* Chosen sprites */
+.chosen-container-single .chosen-single div {
+    padding-top: 2px;
+}
+.chosen-container-single .chosen-single abbr{
+    top: 8px;
+    right: 22px;
+}
+
+/** List page */
+
+.node .online {
+    color: green;
+}
+
+.node .offline, .node .gone {
+    color: red;
+}
+
+
 input[type="submit"].link {
     border: none;
     background: none;
@@ -104,18 +120,4 @@ input[type="submit"].link {
     color: blue;
     text-decoration: underline;
     cursor: pointer;
-}
-
-.formgrid {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-column-gap: 5px;
-    align-items: center;
-}
-
-.fieldgrid {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    grid-column-gap: 5px;
 }

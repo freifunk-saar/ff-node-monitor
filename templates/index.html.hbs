@@ -25,7 +25,15 @@
   Du kannst dich registrieren, um per E-Mail über Statusänderungen informiert zu werden, zum Beispiel wenn ein Knoten offline geht.
 </p>
 <form method="get" action="list">
-  E-Mail-Adresse: <input type="text" name="email">&nbsp;&nbsp;<input type="submit" value="Knoten überwachen">
+  <div class="formgrid">
+    <div class="fieldgrid">
+      <div>E-Mail-Adresse:</div>
+      <input type="text" name="email">
+    </div>
+    <div class="button">
+      <input type="submit" value="Knoten überwachen">
+    </div>
+  </div>
 </form>
 {{~/inline}}
 {{~> partials/page }}
