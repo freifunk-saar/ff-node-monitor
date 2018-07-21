@@ -57,8 +57,8 @@ input, select,
 .chosen-container-single .chosen-single,
 .chosen-container-active.chosen-with-drop .chosen-single {
     background: #fff;
-    height: 25px;
-    box-sizing: content-box;
+    height: 30px;
+    box-sizing: border-box;
     color: #000;
     border-radius: 3px;
     border: 2px solid #888;
