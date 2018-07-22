@@ -47,7 +47,8 @@ the steps accordingly.
     ```
 
     If that fails, it is possible that the latest Rust nightly is incompatible
-    with one of the dependencies.  You can install a tested version using:
+    with one of the dependencies.  You can install and use a tested version
+    using:
 
     ```
     sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
@@ -144,6 +145,9 @@ sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rus
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
 sudo systemctl restart ff-node-monitor
 ```
+
+Make sure to check `Rocket.toml.dist` for new mandatory config options and adapt
+your config if necessary.
 
 ## Customization
 
