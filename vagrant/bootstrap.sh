@@ -41,7 +41,12 @@ HOME_PATH='/opt/ff-node-monitor'
 FFNM_USERNAME="ff-node-monitor"
 
 : "#### We need some development libraries for the build process:"
-sudo apt update && sudo apt -y install git curl gcc pkg-config libssl-dev libpq-dev ssmtp locales-all
+sudo apt update && sudo apt -y install git curl gcc pkg-config libssl-dev libpq-dev ssmtp
+
+if [ IS_TRAVIS != 1 ]; then
+  # locales-all not present in Travis CI
+  sudo apt update && sudo apt -y install locales-all
+fi
 
 : "#### create a user for this service, and change to its home directory:"
 sudo adduser $FFNM_USERNAME --home "$HOME_PATH" --system
