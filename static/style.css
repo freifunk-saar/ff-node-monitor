@@ -29,6 +29,8 @@ h2 {
 
 h3 {
     font-size: 150%;
+    margin-top: 30px;
+    margin-bottom: 15px;
 }
 
 #footer {
@@ -49,8 +51,8 @@ h3 {
 .fieldgrid {
     display: grid;
     grid-template-columns: auto 1fr;
-    align-items: center;
     grid-column-gap: 5px;
+    align-items: center;
 }
 
 input, select,
