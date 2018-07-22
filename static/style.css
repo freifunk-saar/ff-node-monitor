@@ -88,6 +88,10 @@ input[type="submit"] {
     cursor: pointer;
 }
 
+input[type="text"] {
+    min-width: 200px;
+}
+
 input[disabled=""] {
     color: #AAA;
     border-color: #CCC;
