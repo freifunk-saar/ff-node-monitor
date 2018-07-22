@@ -152,4 +152,13 @@ your config if necessary.
 ## Customization
 
 If you want to adapt the node monitor to the layout of your web presence, you
-can set `stylesheet` to an external CSS file in your `Rocket.toml`.
+can set `stylesheet` to an external CSS file in your `Rocket.toml`. Put any images, you need
+into `src/static/`. Here a CSS-example:
+
+```
+#title {
+    padding-top: 131px;
+    background: url('static/logo.png');
+    background-repeat: no-repeat;
+}
+```
