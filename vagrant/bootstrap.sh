@@ -76,6 +76,9 @@ cat <<EOF > Rocket.toml
 [global.ff-node-monitor.ui]
 # The name of your Freifunk community.
 instance_name = "$INSTANCE_NAME"
+# The sentence "Willkommen bei $instance_article_dative $instance_name" should be grammatically
+# correct.
+instance_article_dative = "der"
 # The sender address of the emails that are sent by ff-node-monitor:
 email_from = "$EMAIL_FROM"
 
