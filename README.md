@@ -178,5 +178,13 @@ http://10.19.0.2:8833. If you want to login the server use
 ```
 vagrant ssh ff-service
 ```
-If you want to send out emails configure `/etc/ssmtp/ssmtp.conf`.
 
+If you want to delete and start over use
+
+```
+vagrant destroy ff-service
+vagrant up ff-service
+```
+
+
+If you want to send out emails configure `/etc/ssmtp/ssmtp.conf`.
