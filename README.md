@@ -144,3 +144,8 @@ sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rus
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
 sudo systemctl restart ff-node-monitor
 ```
+
+## Customization
+
+If you want to adapt the node monitor to the layout of your web presence, you
+can set `stylesheet` to an external CSS file in your `Rocket.toml`.
