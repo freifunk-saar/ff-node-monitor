@@ -15,7 +15,7 @@ nodes = "https://host/path/nodes.json"
 # URL to the source code (needed for AGPL compliance).  You can leave this unchanged if you didn't
 # change the code.  Otherwise, you have to upload the changed code somewhere and point to it here.
 sources = "https://github.com/freifunk-saar/ff-node-monitor"
-# Optional: Absolute URL to another sytelsheet that is included in the page.
+# Optional: Absolute URL to another stylesheet that is included in the page.
 #stylesheet = "https://..."
 
 [global.ff-node-monitor.secrets]
