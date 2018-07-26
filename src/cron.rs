@@ -42,8 +42,8 @@ mod json {
 
     #[derive(Deserialize, Debug)]
     crate struct NodeInfo {
-        crate node_id: String,
-        crate hostname: String,
+        crate node_id: Option<String>,
+        crate hostname: Option<String>,
     }
 
     #[derive(Deserialize, Debug)]
@@ -84,9 +84,9 @@ struct NodeData {
 }
 
 // From a JSON node, extract node ID and other information
-fn json_to_node_data(node: json::Node) -> (String, NodeData) {
-    let node_data = NodeData { name: node.nodeinfo.hostname, online: node.flags.online };
-    (node.nodeinfo.node_id, node_data)
+fn json_to_node_data(node: json::Node) -> Option<(String, NodeData)> {
+    let node_data = NodeData { name: node.nodeinfo.hostname?, online: node.flags.online };
+    Some((node.nodeinfo.node_id?, node_data))
 }
 
 fn model_to_node_data(node: models::NodeQuery) -> (String, NodeData) {
@@ -121,8 +121,9 @@ pub fn update_nodes(
     // Build node HashMap: map node ID to name and online state
     let mut cur_nodes_map : HashMap<String, NodeData> = HashMap::new();
     for cur_node in cur_nodes.nodes.into_iter() {
-        let (id, data) = json_to_node_data(cur_node);
-        cur_nodes_map.insert(id, data);
+        if let Some((id, data)) = json_to_node_data(cur_node) {
+            cur_nodes_map.insert(id, data);
+        }
     }
 
     // Compute which nodes changed their state, also update node names in DB
