@@ -149,6 +149,14 @@ sudo systemctl restart ff-node-monitor
 Make sure to check `Rocket.toml.dist` for new mandatory config options and adapt
 your config if necessary.
 
+## Debugging
+
+When something goes wrong, the first step should be to look at the error log:
+
+```
+sudo journalctl -u ff-node-monitor.service
+```
+
 ## Customization
 
 If you want to adapt the node monitor to the layout of your web presence, you
