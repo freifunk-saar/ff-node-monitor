@@ -35,6 +35,10 @@ FFNM_USERNAME="ff-node-monitor"
 : "#### We need some development libraries for the build process:"
 sudo apt update && sudo apt -y install git curl gcc pkg-config libssl-dev libpq-dev ssmtp
 
+: "#### setup locale"
+sed -i 's/# \(\(de_DE\|en_US\)\.UTF-8 UTF-8\)/\1/' /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales
+cat /etc/locale.gen | fgrep UTF-8
+
 : "#### create a user for this service, and change to its home directory:"
 sudo adduser $FFNM_USERNAME --home "$HOME_PATH" --system
 cd "$HOME_PATH"
@@ -43,7 +47,8 @@ sudo chown $FFNM_USERNAME .
 ffsudo="sudo -u $FFNM_USERNAME"
 
 : "#### fetch the ff-node-monitor sources:"
-$ffsudo git clone https://github.com/freifunk-saar/ff-node-monitor.git src
+# do not fail when re-provisioning
+test -d src || $ffsudo git clone https://github.com/freifunk-saar/ff-node-monitor.git src
 
 : "#### ff-node-monitor is written in Rust using Rocket, which means it needs a nightly version of Rust:"
 $ffsudo curl https://sh.rustup.rs -sSf -o rustup.sh
@@ -56,9 +61,11 @@ $ffsudo "$HOME_PATH/.cargo/bin/cargo" build --release
 
 : "#### Database setup"
 apt -y install postgresql
-sudo -u postgres psql -c 'CREATE ROLE "'$FFNM_USERNAME'" WITH LOGIN;' 
-# TODO: Intsall and use de_DE.UTF-8 locale
-sudo -u postgres psql -c 'CREATE DATABASE "'$FFNM_USERNAME'" WITH OWNER = "'$FFNM_USERNAME'" LC_COLLATE = "en_US.UTF-8" TEMPLATE template0;'
+psql="sudo -u postgres psql"
+if ! $psql -lqt | cut -d \| -f 1 | grep -qw ff-node-monitor; then
+    $psql -c 'DROP ROLE IF EXISTS "'$FFNM_USERNAME'"; CREATE ROLE "'$FFNM_USERNAME'" WITH LOGIN;'
+    $psql -c 'CREATE DATABASE "'$FFNM_USERNAME'" WITH OWNER = "'$FFNM_USERNAME'" LC_COLLATE = '\''de_DE.utf8'\'' TEMPLATE template0;'
+fi
 
 : "#### Service setup"
 : "#### The service loads its configuration from a Rocket.toml file in the source directory. You can start by copying the template"
