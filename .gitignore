@@ -3,5 +3,3 @@
 /target
 **/*.rs.bk
 Rocket.toml
-.vagrant
-/vagrant/vagrant.config
