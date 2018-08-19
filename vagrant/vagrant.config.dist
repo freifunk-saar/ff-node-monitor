@@ -1,0 +1,10 @@
+# Copy this file to `vagrant.config` and change values to keep them over a `git pull`
+
+# The name of your Freifunk community.
+INSTANCE_NAME="Freifunk Alpha Centauri"
+
+# The sender address of the emails that are sent by ff-node-monitor.
+EMAIL_FROM="freifunk@alpha-centauri.mw"
+
+# The URL to the hopglass nodes.json file.
+NODES_URL="https://map.freifunk.in-kiel.de/yanic/nodes.json"
