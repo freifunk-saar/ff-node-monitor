@@ -158,8 +158,9 @@ can set `stylesheet` to an external CSS file in your `Rocket.toml`.
 
 You can easily set up a test VM using Vagrant.
 
-Optionally first you can copy the default config file `vagrant.config.dist` to
-`vagrant.config` and customize the configuration. Then follow these steps:
+If you want to tweak the default configuration (which you do not have to), first
+copy the default config file `vagrant.config.dist` to `vagrant.config` and
+customize the configuration. Then follow these steps:
 
 ```
 sudo apt install vagrant
@@ -169,11 +170,11 @@ vagrant up ff-service
 
 This will take a while, downloading the Vagrant box and install a running system
 inside. You can adapt `bootstrap.sh` as you like to test around with different
-settings. In your real setup you have to change the root URL where you will be
-hosting ff-node-monitor.
+settings. In your real setup you at least have to change the root URL where you
+will be hosting ff-node-monitor.
 
-You can then access the virtual server frontend under
-http://10.19.0.2:8833. If you want to login the server use
+You can then access the vagrant box at *http://localhost:8833`. If you want to
+login the server use
 
 ```
 vagrant ssh ff-service
@@ -185,6 +186,5 @@ If you want to delete and start over use
 vagrant destroy ff-service
 vagrant up ff-service
 ```
-
 
 If you want to send out emails configure `/etc/ssmtp/ssmtp.conf`.
