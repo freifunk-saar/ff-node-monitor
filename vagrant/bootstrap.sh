@@ -19,14 +19,9 @@ fi
 
 # some variables used in this script
 
-# URL the service will be available from the outside (external IP)
-# this must match the actual IP handed out by Vagrant
-# TODO: maybe determine that IP in the script somehow
-EXTERNAL="10.19.0.2"
-
+# port and URL
+PORT=8833 # matches the port forwarding in Vagrantfile
 ROOT_URL="http://localhost:$PORT"
-
-WEB_URL="http://$EXTERNAL:$PORT"
 
 HOME_PATH='/opt/ff-node-monitor'
 
@@ -84,7 +79,7 @@ email_from = "$EMAIL_FROM"
 
 [global.ff-node-monitor.urls]
 # The root URL where you will be hosting ff-node-monitor.
-root = "$WEB_URL"
+root = "$ROOT_URL"
 # The URL to the hopglass nodes.json file.
 nodes = "$NODES_URL"
 # URL to the source code (needed for AGPL compliance).  You can leave this unchanged if you didn't
@@ -128,4 +123,4 @@ sudo systemctl status ff-node-monitor
 sleep 10
 $ffsudo curl $ROOT_URL/cron
 
-echo "The site should now be reacheable under $WEB_URL"
+echo "The site should now be reacheable under $ROOT_URL"

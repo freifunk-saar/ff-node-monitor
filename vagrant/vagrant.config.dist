@@ -8,6 +8,3 @@ EMAIL_FROM="freifunk@alpha-centauri.mw"
 
 # The URL to the hopglass nodes.json file.
 NODES_URL="https://map.freifunk.in-kiel.de/yanic/nodes.json"
-
-# The port to listen on
-PORT=8833

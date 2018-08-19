@@ -21,8 +21,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     t.vm.hostname = "ff-services"
     t.vm.network "private_network",ip: "10.19.0.2", netmask: "255.255.0.0"
     t.vm.provision :shell, path: "bootstrap.sh"
-    # this would only work as root:
-    # t.vm.network :forwarded_port, guest: 8833, host: 80
+    t.vm.network :forwarded_port, guest: 8833, host: 8833
   end
   
   # disable automatic update check:
