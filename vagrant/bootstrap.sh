@@ -46,9 +46,11 @@ ffsudo="sudo -u $FFNM_USERNAME"
 test -d src || $ffsudo git clone https://github.com/freifunk-saar/ff-node-monitor.git src
 
 : "#### ff-node-monitor is written in Rust using Rocket, which means it needs a nightly version of Rust:"
-$ffsudo curl https://sh.rustup.rs -sSf -o rustup.sh
-$ffsudo sh rustup.sh -y --default-toolchain $(cat "$HOME_PATH/src/rust-version")
-$ffsudo rm rustup.sh
+if ! test -f $HOME_PATH/.cargo/bin/rustc; then
+    $ffsudo curl https://sh.rustup.rs -sSf -o rustup.sh
+    $ffsudo sh rustup.sh -y --default-toolchain $(cat "$HOME_PATH/src/rust-version")
+    $ffsudo rm rustup.sh
+fi
 
 : "#### build the ff-node-monitor "
 cd "$HOME_PATH/src"
@@ -112,6 +114,7 @@ sudo cp ff-node-monitor.service /etc/systemd/system/
 : "#### If you change the HOME_PATH, you also have to adapt the path in the service file"
 sudo sed -i 's|/opt/ff-node-monitor|'"$HOME_PATH"'|g' /etc/systemd/system/ff-node-monitor.service
 sudo systemctl daemon-reload
+sudo systemctl stop ff-node-monitor
 sudo systemctl enable ff-node-monitor.service
 sudo systemctl start ff-node-monitor
 sudo systemctl status ff-node-monitor
@@ -120,7 +123,7 @@ sudo systemctl status ff-node-monitor
 (sudo crontab -u $FFNM_USERNAME -l; echo "*/5 * * * *    curl $ROOT_URL/cron" ) | sudo crontab -u $FFNM_USERNAME -
 
 : "#### read node data initially:"
-sleep 10
+sleep 1
 $ffsudo curl $ROOT_URL/cron
 
 echo "The site should now be reacheable under $ROOT_URL"
