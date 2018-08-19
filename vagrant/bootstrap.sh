@@ -27,19 +27,18 @@ HOME_PATH='/opt/ff-node-monitor'
 
 FFNM_USERNAME="ff-node-monitor"
 
-: "#### We need some development libraries for the build process:"
-sudo apt update && sudo apt -y install git curl gcc pkg-config libssl-dev libpq-dev ssmtp
-
-: "#### setup locale"
-sed -i 's/# \(\(de_DE\|en_US\)\.UTF-8 UTF-8\)/\1/' /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales
-cat /etc/locale.gen | fgrep UTF-8
-
 : "#### create a user for this service, and change to its home directory:"
 sudo adduser $FFNM_USERNAME --home "$HOME_PATH" --system
 cd "$HOME_PATH"
 sudo chown $FFNM_USERNAME .
-
 ffsudo="sudo -u $FFNM_USERNAME"
+
+: "#### We need some development libraries for the build process:"
+sudo apt update && sudo apt -y install git ssmtp libssl-dev libpq-dev curl build-essential pkg-config
+
+: "#### setup locale"
+sed -i 's/# \(\(de_DE\|en_US\)\.UTF-8 UTF-8\)/\1/' /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales
+cat /etc/locale.gen | fgrep UTF-8
 
 : "#### fetch the ff-node-monitor sources:"
 # do not fail when re-provisioning
@@ -51,8 +50,6 @@ if ! test -f $HOME_PATH/.cargo/bin/rustc; then
     $ffsudo sh rustup.sh -y --default-toolchain $(cat "$HOME_PATH/src/rust-version")
     $ffsudo rm rustup.sh
 fi
-
-: "#### build the ff-node-monitor "
 cd "$HOME_PATH/src"
 $ffsudo "$HOME_PATH/.cargo/bin/cargo" build --release
 
