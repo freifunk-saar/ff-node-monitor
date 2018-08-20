@@ -34,11 +34,10 @@ sudo chown $FFNM_USERNAME .
 ffsudo="sudo -u $FFNM_USERNAME"
 
 : "#### We need some development libraries for the build process:"
-sudo apt update && sudo apt -y install git ssmtp libssl-dev libpq-dev curl gcc pkg-config
+sudo apt update && sudo apt -y --no-install-recommends install git ssmtp libc6-dev libssl-dev libpq-dev curl gcc pkg-config
 
 : "#### setup locale"
 sed -i 's/# \(\(de_DE\|en_US\)\.UTF-8 UTF-8\)/\1/' /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales
-cat /etc/locale.gen | fgrep UTF-8
 
 : "#### fetch the ff-node-monitor sources:"
 # do not fail when re-provisioning
@@ -121,6 +120,6 @@ sudo systemctl status ff-node-monitor
 
 : "#### read node data initially:"
 sleep 1
-$ffsudo curl $ROOT_URL/cron
+$ffsudo curl -sS $ROOT_URL/cron
 
 echo "The site should now be reacheable under $ROOT_URL"

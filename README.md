@@ -26,7 +26,7 @@ the steps accordingly.
 2.  We need some development libraries for the build process:
 
     ```
-    sudo apt install libssl-dev libpq-dev curl gcc pkg-config
+    sudo apt install libssl-dev libpq-dev libc6-dev curl gcc pkg-config
     ```
 
 3.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
