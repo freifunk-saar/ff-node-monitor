@@ -14,7 +14,7 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#![feature(plugin, crate_visibility_modifier, custom_derive, catch_expr)]
+#![feature(plugin, crate_visibility_modifier, custom_derive)]
 #![plugin(rocket_codegen)]
 
 // Diesel macros generate warnings
