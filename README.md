@@ -53,13 +53,11 @@ the steps accordingly.
     ```
     sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
     ```
-
-    Then try the build steps above again.
-
-5.  If you want to save some disk space, you can now clean up the build directory:
-
+    
+    You can delete the build artifacts (about 1.5GB) if your monitor is running fine with:
+    
     ```
-    rm -rf target/release/*/ # delete all *directories* in the build dir
+    rm -rf .rustup src/target/release/{deps,build}
     ```
 
 ### Database setup
