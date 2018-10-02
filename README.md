@@ -54,6 +54,14 @@ the steps accordingly.
     sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
     ```
 
+    Then try the build steps above again.
+
+5.  If you want to save some disk space, you can now clean up the build directory:
+
+    ```
+    rm -rf target/release/*/ # delete all *directories* in the build dir
+    ```
+
 ### Database setup
 
 1.  *ff-node-monitor* needs PostgreSQL as a database backend:
