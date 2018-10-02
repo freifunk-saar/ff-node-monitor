@@ -140,7 +140,7 @@ the steps accordingly.
     (as configured in `Rocket.toml`):
 
     ```
-    */5 * * * *    curl $ROOT_URL/cron
+    */5 * * * *    curl -s $ROOT_URL/cron
     ```
 
 That's it!  The service should now be running and working.

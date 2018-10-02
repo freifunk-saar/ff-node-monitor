@@ -114,7 +114,7 @@ sudo systemctl start ff-node-monitor
 sudo systemctl status ff-node-monitor
 
 : "#### Finally, the service relies on a cron job to regularly check in on all the nodes and send notifications when their status changed:"
-(sudo crontab -u $FFNM_USERNAME -l; echo "*/5 * * * *    curl $ROOT_URL/cron" ) | sudo crontab -u $FFNM_USERNAME -
+(sudo crontab -u $FFNM_USERNAME -l; echo "*/5 * * * *    curl -s $ROOT_URL/cron" ) | sudo crontab -u $FFNM_USERNAME -
 
 : "#### read node data initially:"
 sleep 1
