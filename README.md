@@ -59,8 +59,18 @@ the steps accordingly.
 5.  If you want to save some disk space, you can now clean up the build directory:
 
     ```
-    rm -rf target/release/*/ # delete all *directories* in the build dir
+    rm -rf target/release/{build,deps,incremental,.fingerprint}
     ```
+
+    Over time, you will also accumulate more and more different Rust versions.
+    You can use
+
+    ```
+    sudo -u ff-node-monitor ~ff-node-monitor/.cargo/bin/rustup toolchain list
+    ```
+
+    to see which versions you have installed, and then `toolchain uninstall`
+    the ones you do not need any more (all but the last, most likely).
 
 ### Database setup
 
@@ -87,7 +97,7 @@ the steps accordingly.
     directory.  You can start by copying the template:
 
     ```
-    cd /opt/ff-node-monitor/src
+    cd ~ff-node-monitor/src
     sudo -u ff-node-monitor cp Rocket.toml.dist Rocket.toml
     chmod 600 Rocket.toml
     ```
@@ -143,10 +153,10 @@ That's it!  The service should now be running and working.
 
 ## Upgrade
 
-Upgrade the service to the latest git version with these steps:
+To upgrade the service to the latest git version, follow these steps:
 
 ```
-cd /opt/ff-node-monitor/src/
+cd ~ff-node-monitor/src/
 git pull
 sudo rm target/release/ff-node-monitor
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
