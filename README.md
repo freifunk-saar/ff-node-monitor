@@ -34,9 +34,12 @@ the steps accordingly.
 
     ```
     curl https://sh.rustup.rs -sSf > rustup.sh
-    sudo -u ff-node-monitor sh rustup.sh --default-toolchain nightly
+    sudo -u ff-node-monitor sh rustup.sh --default-toolchain $(cat rust-version)
     rm rustup.sh
     ```
+
+    The file `rust-version` always contains a tested nightly version number. If
+    you want the latest nightly version instead, just use `--default-toolchain nightly` .
 
 4.  Now we can fetch the sources and build them:
 
@@ -46,15 +49,6 @@ the steps accordingly.
     sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
-    If that fails, it is possible that the latest Rust nightly is incompatible
-    with one of the dependencies.  You can install and use a tested version
-    using:
-
-    ```
-    sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
-    ```
-
-    Then try the build steps above again.
 
 5.  If you want to save some disk space, you can now clean up the build directory:
 
@@ -165,7 +159,7 @@ sudo systemctl restart ff-node-monitor
 ```
 
 Make sure to check `Rocket.toml.dist` for new mandatory config options and adapt
-your config if necessary.
+your config `Rocket.toml` if necessary.
 
 ## Debugging
 
