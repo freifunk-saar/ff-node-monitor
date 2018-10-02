@@ -8,8 +8,8 @@ instance_article_dative = "der"
 email_from = "...@...freifunk.net"
 
 [global.ff-node-monitor.urls]
-# The root URL where you will be hosting ff-node-monitor.
-root = "https://host/node-monitor"
+# The root URL where you will be hosting ff-node-monitor (with trailing slash)
+root = "https://host/node-monitor/"
 # The URL to the hopglass nodes.json file.
 nodes = "https://host/path/nodes.json"
 # URL to the source code (needed for AGPL compliance).  You can leave this unchanged if you didn't
