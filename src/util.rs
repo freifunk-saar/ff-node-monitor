@@ -28,7 +28,7 @@ use failure::Error;
 use lettre_email;
 use lettre::smtp::{SMTP_PORT, SmtpTransport, SmtpClient, ClientSecurity};
 
-use config::Config;
+use crate::config::Config;
 
 use std::ops::Deref;
 

@@ -24,8 +24,8 @@ use ring::{hmac, error};
 use failure::Error;
 use rmp_serde::to_vec as serialize_to_vec;
 
-use schema::*;
-use models::*;
+use crate::schema::*;
+use crate::models::*;
 
 enum_number!(Operation {
     Add = 1,

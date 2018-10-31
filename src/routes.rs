@@ -29,12 +29,12 @@ use std::path::{Path, PathBuf};
 use std::collections::HashSet;
 use std::io;
 
-use db_conn::DbConn;
-use action::*;
-use models::*;
-use config::{Config, Renderer};
-use util::{EmailAddress, EmailBuilder};
-use cron;
+use crate::db_conn::DbConn;
+use crate::action::*;
+use crate::models::*;
+use crate::config::{Config, Renderer};
+use crate::util::{EmailAddress, EmailBuilder};
+use crate::cron;
 
 #[get("/")]
 fn index(renderer: Renderer) -> Result<Template, Error> {
@@ -48,7 +48,7 @@ struct ListForm {
 
 #[get("/list?<form>")]
 fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
-    use schema::*;
+    use crate::schema::*;
 
     db.transaction::<_, Error, _>(|| {
         let watched_nodes = monitors::table
@@ -91,7 +91,7 @@ fn prepare_action(
     db: DbConn,
 ) -> Result<Template, Error>
 {
-    use schema::*;
+    use crate::schema::*;
 
     let action = action.into_inner();
 

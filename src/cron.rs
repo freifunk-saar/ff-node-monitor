@@ -24,10 +24,10 @@ use lettre::Transport;
 
 use std::collections::HashMap;
 
-use config;
-use models;
-use schema::*;
-use util::EmailBuilder;
+use crate::config;
+use crate::models;
+use crate::schema::*;
+use crate::util::EmailBuilder;
 
 #[derive(Debug, Fail)]
 enum NodeListError {
