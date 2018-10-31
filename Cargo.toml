@@ -20,9 +20,16 @@ failure = "0.1.1"
 url = "1.7.0"
 url_serde = "0.2.0"
 toml = "0.4.6"
-lettre = "0.8"
-lettre_email = "0.8"
-base64 = "0.9.1"
+base64 = "0.10"
 hex = "0.3.2"
-reqwest = "0.8.5"
+reqwest = "0.9"
 chrono = { version = "0.4.2", features = ["serde"] }
+
+[dependencies.lettre]
+git = "https://github.com/lettre/lettre"
+rev = "644b1e59b06704822c6a540c12ed44b6e827d221"
+features = ["smtp-transport"]
+
+[dependencies.lettre_email]
+git = "https://github.com/lettre/lettre"
+rev = "644b1e59b06704822c6a540c12ed44b6e827d221"

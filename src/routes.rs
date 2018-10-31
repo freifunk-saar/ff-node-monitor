@@ -20,7 +20,7 @@ use rocket_contrib::Template;
 
 use diesel::prelude::*;
 use failure::Error;
-use lettre::EmailTransport;
+use lettre::Transport;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
@@ -136,7 +136,7 @@ fn prepare_action(
         .to(action.email.as_str())
         .build()?;
     let mut mailer = email_builder.mailer()?;
-    mailer.send(&email)?;
+    mailer.send(email.into())?;
 
     // Render
     let list_url = url_query!(config.urls.root.join("list")?,

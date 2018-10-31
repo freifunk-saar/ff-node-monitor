@@ -20,7 +20,7 @@ use failure::Error;
 use serde_json;
 use reqwest;
 use diesel;
-use lettre::EmailTransport;
+use lettre::Transport;
 
 use std::collections::HashMap;
 
@@ -205,7 +205,7 @@ pub fn update_nodes(
             let email = email_builder.email(email_template)?
                 .to(watcher.email.as_str())
                 .build()?;
-            mailer.send(&email)?;
+            mailer.send(email.into())?;
         }
     }
 
