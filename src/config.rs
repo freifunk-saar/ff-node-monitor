@@ -22,10 +22,10 @@ use rocket_contrib::Template;
 use toml;
 use url::Url;
 use url_serde;
-use serde::Deserialize;
-use serde::de::IntoDeserializer;
-use ring::hmac;
+use serde::{Deserialize, de::IntoDeserializer};
+use serde_derive::{Deserialize, Serialize};
 use serde_json::{self, json};
+use ring::hmac;
 use failure::{Error, bail};
 
 use std::borrow::Cow;

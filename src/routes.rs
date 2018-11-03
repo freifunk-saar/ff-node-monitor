@@ -25,6 +25,7 @@ use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
 use serde_json::json;
+use serde_derive::Serialize;
 
 use std::path::{Path, PathBuf};
 use std::collections::HashSet;

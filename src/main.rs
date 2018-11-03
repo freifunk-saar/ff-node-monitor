@@ -20,10 +20,10 @@
 // FIXME: Diesel macros generate warnings
 #![allow(proc_macro_derive_resolution_fallback)]
 
-// FIXME: Get rid of the remaining macro_use once we can
+// FIXME: Get rid of the remaining `extern crate` once we can
 #[macro_use] extern crate diesel;
-#[macro_use] extern crate serde_derive;
 
+// FIXME: Get rid of the remaining `macro_use` once we can
 #[macro_use] mod serde_enum_number;
 #[macro_use] mod util;
 mod db_conn;

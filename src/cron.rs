@@ -39,6 +39,7 @@ enum NodeListError {
 
 mod json {
     use chrono::{DateTime, Utc};
+    use serde_derive::Deserialize;
 
     #[derive(Deserialize, Debug)]
     crate struct NodeInfo {
@@ -77,7 +78,7 @@ mod json {
 }
 
 // Just the data about the node (the RHS of the HashMap)
-#[derive(Clone, PartialEq, Eq, Serialize)]
+#[derive(Clone, PartialEq, Eq, serde_derive::Serialize)]
 struct NodeData {
     name: String,
     online: bool,

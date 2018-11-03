@@ -27,6 +27,7 @@ use rocket_contrib::Template;
 use failure::{Fail, Error, bail};
 use lettre_email;
 use lettre::smtp::{SMTP_PORT, SmtpTransport, SmtpClient, ClientSecurity};
+use serde_derive::Serialize;
 
 use crate::config::Config;
 
