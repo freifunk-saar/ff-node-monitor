@@ -17,30 +17,12 @@
 #![feature(plugin, crate_visibility_modifier, custom_derive)]
 #![plugin(rocket_codegen)]
 
-// Diesel macros generate warnings
+// FIXME: Diesel macros generate warnings
 #![allow(proc_macro_derive_resolution_fallback)]
 
-extern crate rocket;
-extern crate rocket_contrib;
-extern crate r2d2;
-extern crate r2d2_diesel;
+// FIXME: Get rid of the remaining macro_use once we can
 #[macro_use] extern crate diesel;
-extern crate diesel_migrations;
-extern crate ring;
-extern crate serde;
 #[macro_use] extern crate serde_derive;
-#[macro_use] extern crate serde_json;
-extern crate rmp_serde;
-#[macro_use] extern crate failure;
-extern crate url;
-extern crate url_serde;
-extern crate toml;
-extern crate lettre;
-extern crate lettre_email;
-extern crate base64;
-extern crate hex;
-extern crate reqwest;
-extern crate chrono;
 
 #[macro_use] mod serde_enum_number;
 #[macro_use] mod util;

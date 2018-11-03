@@ -19,11 +19,12 @@ use rocket::{State, request::Form};
 use rocket_contrib::Template;
 
 use diesel::prelude::*;
-use failure::Error;
+use failure::{Error, bail};
 use lettre::Transport;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
+use serde_json::json;
 
 use std::path::{Path, PathBuf};
 use std::collections::HashSet;

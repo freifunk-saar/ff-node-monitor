@@ -25,8 +25,8 @@ use url_serde;
 use serde::Deserialize;
 use serde::de::IntoDeserializer;
 use ring::hmac;
-use serde_json;
-use failure::Error;
+use serde_json::{self, json};
+use failure::{Error, bail};
 
 use std::borrow::Cow;
 

@@ -24,7 +24,7 @@ use rocket::{
 };
 use rocket_contrib::Template;
 
-use failure::Error;
+use failure::{Fail, Error, bail};
 use lettre_email;
 use lettre::smtp::{SMTP_PORT, SmtpTransport, SmtpClient, ClientSecurity};
 

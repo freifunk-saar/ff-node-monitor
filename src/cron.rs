@@ -16,8 +16,8 @@
 
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
-use failure::Error;
-use serde_json;
+use failure::{Error, Fail, bail};
+use serde_json::{self, json};
 use reqwest;
 use diesel;
 use lettre::Transport;
