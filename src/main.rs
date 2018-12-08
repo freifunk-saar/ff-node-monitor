@@ -14,14 +14,14 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#![feature(plugin, crate_visibility_modifier, custom_derive)]
-#![plugin(rocket_codegen)]
+#![feature(proc_macro_hygiene, decl_macro, crate_visibility_modifier)]
 
 // FIXME: Diesel macros generate warnings
 #![allow(proc_macro_derive_resolution_fallback)]
 
 // FIXME: Get rid of the remaining `extern crate` once we can
 #[macro_use] extern crate diesel;
+#[macro_use] extern crate rocket;
 
 // FIXME: Get rid of the remaining `macro_use` once we can
 #[macro_use] mod serde_enum_number;
@@ -40,7 +40,7 @@ fn main() {
         .attach(config::fairing("ff-node-monitor"))
         // TODO: Use Template::custom once rocket 0.4 is released, then we can e.g.
         // call `handlebars.set_strict_mode`.
-        .attach(rocket_contrib::Template::fairing())
+        .attach(rocket_contrib::templates::Template::fairing())
         .mount("/", routes::routes())
         .launch();
 }

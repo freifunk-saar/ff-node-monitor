@@ -22,7 +22,7 @@ use rocket::{
     response::Responder,
     http::{Status, RawStr},
 };
-use rocket_contrib::Template;
+use rocket_contrib::templates::Template;
 
 use failure::{Fail, Error, bail};
 use lettre_email;

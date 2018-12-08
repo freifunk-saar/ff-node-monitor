@@ -16,7 +16,7 @@
 
 use rocket::response::NamedFile;
 use rocket::{State, request::Form};
-use rocket_contrib::Template;
+use rocket_contrib::templates::Template;
 
 use diesel::prelude::*;
 use failure::{Error, bail};
@@ -44,12 +44,12 @@ fn index(renderer: Renderer) -> Result<Template, Error> {
 }
 
 #[derive(Serialize, FromForm)]
-struct ListForm {
+struct List {
     email: EmailAddress,
 }
 
-#[get("/list?<form>")]
-fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
+#[get("/list?<form..>")]
+fn list(form: Form<List>, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
     use crate::schema::*;
 
     db.transaction::<_, Error, _>(|| {
@@ -72,7 +72,7 @@ fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Erro
                 .collect()
         };
         renderer.render("list", json!({
-            "form": form,
+            "form": *form,
             "watched_nodes": watched_nodes,
             "all_nodes": all_nodes,
         }))
@@ -151,13 +151,13 @@ fn prepare_action(
 }
 
 #[derive(Serialize, FromForm)]
-struct RunActionForm {
+struct RunAction {
     signed_action: String,
 }
 
-#[get("/run_action?<form>")]
+#[get("/run_action?<form..>")]
 fn run_action(
-    form: RunActionForm,
+    form: Form<RunAction>,
     db: DbConn,
     renderer: Renderer,
     config: State<Config>

@@ -17,7 +17,7 @@
 use rocket::{self, State, Outcome};
 use rocket::request::{self, Request, FromRequest};
 use rocket::fairing::{Fairing, AdHoc};
-use rocket_contrib::Template;
+use rocket_contrib::templates::Template;
 
 use toml;
 use url::Url;
@@ -83,7 +83,7 @@ impl Config {
 }
 
 pub fn fairing(section: &'static str) -> impl Fairing {
-    AdHoc::on_attach(move |rocket| {
+    AdHoc::on_attach("Launch DB pool", move |rocket| {
         let config = {
             let config_table = rocket.config().get_table(section)
                 .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
