@@ -38,9 +38,9 @@ fn main() {
     // Launch the rocket
     rocket::ignite()
         .attach(config::fairing("ff-node-monitor"))
-        // TODO: Use Template::custom once rocket 0.4 is released, then we can e.g.
-        // call `handlebars.set_strict_mode`.
-        .attach(rocket_contrib::templates::Template::fairing())
+        .attach(rocket_contrib::templates::Template::custom(|engines| {
+            engines.handlebars.set_strict_mode(true);
+        }))
         .mount("/", routes::routes())
         .launch();
 }
