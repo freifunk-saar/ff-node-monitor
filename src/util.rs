@@ -21,13 +21,14 @@ use rocket::{
     request::{Outcome as ReqOutcome, FromRequest, FromFormValue},
     response::Responder,
     http::{Status, RawStr},
+    UriDisplayQuery,
 };
 use rocket_contrib::templates::Template;
 
 use failure::{Fail, Error, bail};
 use lettre_email;
 use lettre::smtp::{SMTP_PORT, SmtpTransport, SmtpClient, ClientSecurity};
-use serde_derive::Serialize;
+use serde_derive::{Serialize, Deserialize};
 
 use crate::config::Config;
 
@@ -60,7 +61,7 @@ macro_rules! url_query {
 }
 
 /// Type for email addresses in Rocket forms
-#[derive(Serialize)]
+#[derive(Clone, Serialize, Deserialize, UriDisplayQuery)]
 pub struct EmailAddress(String);
 
 impl<'v> FromFormValue<'v> for EmailAddress {

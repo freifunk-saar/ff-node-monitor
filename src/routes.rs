@@ -16,7 +16,7 @@
 
 use rocket::response::NamedFile;
 use rocket::{State, request::Form, FromForm};
-use rocket::{get, post, routes};
+use rocket::{get, post, routes, uri};
 use rocket_contrib::templates::Template;
 
 use diesel::prelude::*;
@@ -44,18 +44,13 @@ fn index(renderer: Renderer) -> Result<Template, Error> {
     renderer.render("index", json!({}))
 }
 
-#[derive(Serialize, FromForm)]
-struct List {
-    email: EmailAddress,
-}
-
-#[get("/list?<form..>")]
-fn list(form: Form<List>, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
+#[get("/list?<email>")]
+fn list(email: EmailAddress, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
     use crate::schema::*;
 
     db.transaction::<_, Error, _>(|| {
         let watched_nodes = monitors::table
-            .filter(monitors::email.eq(form.email.as_str()))
+            .filter(monitors::email.eq(email.as_str()))
             .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
             .order_by(monitors::id)
             .load::<MonitorNodeQuery>(&*db)?;
@@ -73,7 +68,7 @@ fn list(form: Form<List>, renderer: Renderer, db: DbConn) -> Result<Template, Er
                 .collect::<Vec<NodeQuery>>()
         };
         renderer.render("list", json!({
-            "form": *form,
+            "email": email,
             "watched_nodes": watched_nodes,
             "all_nodes": all_nodes,
         }))
@@ -142,12 +137,11 @@ fn prepare_action(
     mailer.send(email.into())?;
 
     // Render
-    let list_url = url_query!(config.urls.root.join("list")?,
-        email = action.email);
+    let list_url = uri!(list: email = &action.email);
     renderer.render("prepare_action", json!({
         "action": action,
         "node_name": node_name,
-        "list_url": list_url.as_str(),
+        "list_url": list_url.to_string(),
     }))
 }
 

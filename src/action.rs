@@ -28,6 +28,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::schema::*;
 use crate::models::*;
+use crate::util::EmailAddress;
 
 enum_number!(Operation {
     Add = 1,
@@ -49,7 +50,7 @@ impl<'v> FromFormValue<'v> for Operation {
 #[derive(Serialize, Deserialize, FromForm, Clone)]
 pub struct Action {
     pub node: String,
-    pub email: String,
+    pub email: EmailAddress,
     pub op: Operation,
 }
 
