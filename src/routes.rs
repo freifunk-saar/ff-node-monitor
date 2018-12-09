@@ -15,7 +15,8 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use rocket::response::NamedFile;
-use rocket::{State, request::Form};
+use rocket::{State, request::Form, FromForm};
+use rocket::{get, post, routes};
 use rocket_contrib::templates::Template;
 
 use diesel::prelude::*;

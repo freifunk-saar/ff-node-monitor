@@ -16,6 +16,7 @@
 
 use rocket::request::FromFormValue;
 use rocket::http::RawStr;
+use rocket::FromForm;
 
 use diesel::prelude::*;
 use diesel;

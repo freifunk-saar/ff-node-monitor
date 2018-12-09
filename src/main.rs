@@ -21,7 +21,6 @@
 
 // FIXME: Get rid of the remaining `extern crate` once we can
 #[macro_use] extern crate diesel;
-#[macro_use] extern crate rocket;
 
 // FIXME: Get rid of the remaining `macro_use` once we can
 #[macro_use] mod serde_enum_number;
