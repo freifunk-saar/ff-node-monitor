@@ -38,6 +38,14 @@ pub struct NodeQuery {
     pub online: bool,
 }
 
+#[derive(Queryable, Serialize)]
+pub struct MonitorNodeQuery {
+    /// Details for what is being monitored
+    pub monitor: MonitorQuery,
+    /// If this monitors an existing node, information about that node
+    pub node: Option<NodeQuery>,
+}
+
 #[derive(Insertable, Identifiable)]
 #[primary_key(id)]
 pub struct Node<'a> {

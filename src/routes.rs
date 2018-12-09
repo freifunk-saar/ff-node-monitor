@@ -58,19 +58,19 @@ fn list(form: Form<List>, renderer: Renderer, db: DbConn) -> Result<Template, Er
             .filter(monitors::email.eq(form.email.as_str()))
             .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
             .order_by(monitors::id)
-            .load::<(MonitorQuery, Option<NodeQuery>)>(&*db)?;
-        let all_nodes : Vec<NodeQuery> = {
+            .load::<MonitorNodeQuery>(&*db)?;
+        let all_nodes = {
             let watched_node_ids : HashSet<&str> = watched_nodes.iter()
-                .filter_map(|node| node.1.as_ref())
+                .filter_map(|node| node.node.as_ref())
                 .map(|node| node.id.as_str())
                 .collect();
-            // Diesel does not support joining to a subquery to we have to do the filtering in Rust
+            // Diesel does not support joining to a subquery so we have to do the filtering in Rust
             nodes::table
                 .order_by(nodes::name)
                 .load::<NodeQuery>(&*db)?
                 .into_iter()
                 .filter(|node| !watched_node_ids.contains(&node.id.as_ref()))
-                .collect()
+                .collect::<Vec<NodeQuery>>()
         };
         renderer.render("list", json!({
             "form": *form,
