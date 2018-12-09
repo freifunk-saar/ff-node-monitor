@@ -141,7 +141,7 @@ fn prepare_action(
     renderer.render("prepare_action", json!({
         "action": action,
         "node_name": node_name,
-        "list_url": list_url.to_string(),
+        "list_url": config.urls.absolute(list_url),
     }))
 }
 

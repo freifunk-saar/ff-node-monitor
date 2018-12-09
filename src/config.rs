@@ -14,7 +14,7 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::{self, State, Outcome};
+use rocket::{self, State, Outcome, http::uri};
 use rocket::request::{self, Request, FromRequest};
 use rocket::fairing::{Fairing, AdHoc};
 use rocket_contrib::templates::Template;
@@ -49,6 +49,18 @@ pub struct Urls {
     #[serde(with = "url_serde")]
     pub sources: Url,
     pub stylesheet: Option<String>,
+}
+
+impl Urls {
+    pub fn absolute(&self, origin: uri::Origin) -> String {
+        let mut str = self.root.to_string();
+        str.push_str(origin.path());
+        if let Some(query) = origin.query() {
+            str.push('?');
+            str.push_str(query);
+        }
+        str
+    }
 }
 
 #[derive(Deserialize)]
