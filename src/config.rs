@@ -66,7 +66,6 @@ impl Urls {
 
 #[derive(Deserialize)]
 pub struct Secrets {
-    pub postgres_url: String,
     pub smtp_host: Option<String>,
     #[serde(with = "util::hex_signing_key")]
     pub action_signing_key: hmac::SigningKey,

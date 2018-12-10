@@ -85,14 +85,14 @@ sources = "https://github.com/freifunk-saar/ff-node-monitor"
 #stylesheet = "https://..."
 
 [global.ff-node-monitor.secrets]
-# PostgreSQL credentials.  If you followed the instructions in the README, this
-# should be correct.
-postgres_url = "postgres://$FFNM_USERNAME@/$FFNM_USERNAME"
 # Key used to sign data for confirmation emails:
 action_signing_key = "$(openssl rand -hex 32)"
 # Optional: Host to submit emails to.  That host must accept email with arbitrary destination
 # from this service.
 smtp_host = "localhost"
+
+[global.databases]
+postgres = { url = "postgres://$FFNM_USERNAME@/$FFNM_USERNAME" }
 
 [global]
 # The address and port on which ff-node-monitor will listen.
