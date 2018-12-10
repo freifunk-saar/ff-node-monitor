@@ -47,6 +47,13 @@ fn main() {
     // Launch the rocket
     rocket::ignite()
         .attach(DbConn::fairing())
+        .attach(rocket::fairing::AdHoc::on_attach("Run DB migrations", |rocket| {
+            let conn = DbConn::get_one(&rocket)
+                .expect("could not connect to DB for migrations");
+            diesel_migrations::run_pending_migrations(&*conn)
+                .expect("failed to run migrations");
+            Ok(rocket)
+        }))
         .attach(config::fairing("ff-node-monitor"))
         .attach(Template::custom(|engines| {
             engines.handlebars.set_strict_mode(true);

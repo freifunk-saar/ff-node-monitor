@@ -95,20 +95,13 @@ impl Config {
 }
 
 pub fn fairing(section: &'static str) -> impl Fairing {
-    AdHoc::on_attach("Launch DB pool", move |rocket| {
+    AdHoc::on_attach("Parse application configuration", move |rocket| {
         let config = {
             let config_table = rocket.config().get_table(section)
                 .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
             Config::new(config_table)
         };
-        let rocket = rocket.manage(config);
-        // also run DB migrations here
-        let conn = crate::DbConn::get_one(&rocket)
-            .expect("could not connect to DB for migrations");
-        diesel_migrations::run_pending_migrations(&*conn)
-            .expect("failed to run migrations");
-        // done
-        Ok(rocket)
+        Ok(rocket.manage(config))
     })
 }
 
