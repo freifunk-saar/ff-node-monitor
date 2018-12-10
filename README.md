@@ -158,8 +158,7 @@ sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
 sudo systemctl restart ff-node-monitor
 ```
 
-Make sure to check `Rocket.toml.dist` for new mandatory config options and adapt
-your config `Rocket.toml` if necessary.
+Check [the CHANGELOG](CHANGELOG.md) to see if any manual steps are needed.
 
 ## Debugging
 
