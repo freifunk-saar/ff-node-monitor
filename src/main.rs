@@ -46,8 +46,8 @@ pub struct DbConn(pub diesel::PgConnection);
 fn main() {
     // Launch the rocket
     rocket::ignite()
-        .attach(config::fairing("ff-node-monitor"))
         .attach(DbConn::fairing())
+        .attach(config::fairing("ff-node-monitor"))
         .attach(Template::custom(|engines| {
             engines.handlebars.set_strict_mode(true);
         }))

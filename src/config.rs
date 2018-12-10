@@ -101,7 +101,14 @@ pub fn fairing(section: &'static str) -> impl Fairing {
                 .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
             Config::new(config_table)
         };
-        Ok(rocket.manage(config))
+        let rocket = rocket.manage(config);
+        // also run DB migrations here
+        let conn = crate::DbConn::get_one(&rocket)
+            .expect("could not connect to DB for migrations");
+        diesel_migrations::run_pending_migrations(&*conn)
+            .expect("failed to run migrations");
+        // done
+        Ok(rocket)
     })
 }
 
