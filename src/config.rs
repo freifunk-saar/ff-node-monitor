@@ -30,7 +30,6 @@ use failure::{Error, bail};
 
 use std::borrow::Cow;
 
-use crate::db_conn;
 use crate::util;
 
 #[derive(Serialize, Deserialize)]
@@ -103,9 +102,7 @@ pub fn fairing(section: &'static str) -> impl Fairing {
                 .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
             Config::new(config_table)
         };
-        Ok(rocket
-            .manage(db_conn::init_db_pool(config.secrets.postgres_url.as_str()))
-            .manage(config))
+        Ok(rocket.manage(config))
     })
 }
 

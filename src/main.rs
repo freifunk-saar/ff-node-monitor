@@ -20,12 +20,11 @@
 #![allow(proc_macro_derive_resolution_fallback)]
 
 // FIXME: Get rid of the remaining `extern crate` once we can
-#[macro_use] extern crate diesel;
+#[macro_use] extern crate diesel as diesel_macros;
 
 // FIXME: Get rid of the remaining `macro_use` once we can
 #[macro_use] mod serde_enum_number;
 #[macro_use] mod util;
-mod db_conn;
 mod routes;
 mod action;
 mod models;
@@ -33,14 +32,26 @@ mod schema;
 mod config;
 mod cron;
 
+use rocket_contrib::{
+    database,
+    databases::diesel,
+    templates::Template,
+    serve::StaticFiles,
+};
+
+// DB connection guard type
+#[database("postgres")]
+pub struct DbConn(pub diesel::PgConnection);
+
 fn main() {
     // Launch the rocket
     rocket::ignite()
         .attach(config::fairing("ff-node-monitor"))
-        .attach(rocket_contrib::templates::Template::custom(|engines| {
+        .attach(DbConn::fairing())
+        .attach(Template::custom(|engines| {
             engines.handlebars.set_strict_mode(true);
         }))
-        .mount("/static", rocket_contrib::serve::StaticFiles::from("static"))
+        .mount("/static", StaticFiles::from("static"))
         .mount("/", routes::routes())
         .launch();
 }

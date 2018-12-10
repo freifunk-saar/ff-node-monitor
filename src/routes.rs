@@ -29,7 +29,7 @@ use serde_derive::Serialize;
 
 use std::collections::HashSet;
 
-use crate::db_conn::DbConn;
+use crate::DbConn;
 use crate::action::*;
 use crate::models::*;
 use crate::config::{Config, Renderer};
