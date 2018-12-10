@@ -14,13 +14,12 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::response::NamedFile;
 use rocket::{State, request::Form, FromForm};
 use rocket::{get, post, routes, uri};
 use rocket_contrib::templates::Template;
 
 use diesel::prelude::*;
-use failure::{Error, bail};
+use failure::Error;
 use lettre::Transport;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
@@ -28,9 +27,7 @@ use base64;
 use serde_json::json;
 use serde_derive::Serialize;
 
-use std::path::{Path, PathBuf};
 use std::collections::HashSet;
-use std::io;
 
 use crate::db_conn::DbConn;
 use crate::action::*;
@@ -194,16 +191,6 @@ fn cron(
     Ok(())
 }
 
-#[get("/static/<file..>")]
-fn static_file(file: PathBuf) -> Result<Option<NamedFile>, Error> {
-    // Using Option<...> turns errors into 404
-    Ok(match NamedFile::open(Path::new("static/").join(file)) {
-        Ok(x) => Some(x),
-        Err(ref x) if x.kind() == io::ErrorKind::NotFound => None,
-        Err(x) => bail!(x),
-    })
-}
-
 pub fn routes() -> Vec<::rocket::Route> {
-    routes![index, list, list_formfail, prepare_action, run_action, cron, static_file]
+    routes![index, list, list_formfail, prepare_action, run_action, cron]
 }

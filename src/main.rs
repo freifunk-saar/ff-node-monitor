@@ -40,6 +40,7 @@ fn main() {
         .attach(rocket_contrib::templates::Template::custom(|engines| {
             engines.handlebars.set_strict_mode(true);
         }))
+        .mount("/static", rocket_contrib::serve::StaticFiles::from("static"))
         .mount("/", routes::routes())
         .launch();
 }
