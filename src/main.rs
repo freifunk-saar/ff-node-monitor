@@ -41,7 +41,7 @@ use rocket_contrib::{
 
 // DB connection guard type
 #[database("postgres")]
-pub struct DbConn(pub diesel::PgConnection);
+struct DbConn(diesel::PgConnection);
 
 fn main() {
     // Launch the rocket
