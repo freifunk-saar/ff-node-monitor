@@ -94,7 +94,7 @@ impl Deref for EmailAddress {
 }
 
 /// Horribly hacky hack to get access to the Request, and then a template's body, for building emails
-pub struct EmailBuilder<'a, 'r: 'a> {
+pub struct EmailBuilder<'a, 'r> {
     request: &'a Request<'r>,
     config: &'a Config,
 }
