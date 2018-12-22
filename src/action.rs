@@ -24,7 +24,7 @@ use diesel::result::{Error as DieselError, DatabaseErrorKind};
 use ring::{hmac, error};
 use failure::{Error, bail};
 use rmp_serde::to_vec as serialize_to_vec;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::schema::*;
 use crate::models::*;
