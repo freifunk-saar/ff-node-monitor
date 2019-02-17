@@ -23,7 +23,7 @@ sources = "https://github.com/freifunk-saar/ff-node-monitor"
 # `openssl rand -hex 32`.
 action_signing_key = "..."
 # Optional: Host to submit emails to.  That host must accept email with arbitrary destination
-# from this service.
+# from this service.  Unless this is "localhost", the connection will be encrypted via STARTTLS.
 #smtp_host = "localhost"
 
 [global.databases]

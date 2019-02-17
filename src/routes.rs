@@ -20,7 +20,6 @@ use rocket_contrib::templates::Template;
 
 use diesel::prelude::*;
 use failure::Error;
-use lettre::Transport;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
@@ -33,7 +32,7 @@ use crate::DbConn;
 use crate::action::*;
 use crate::models::*;
 use crate::config::{Config, Renderer};
-use crate::util::{EmailAddress, EmailBuilder};
+use crate::util::{EmailAddress, EmailSender};
 use crate::cron;
 
 #[get("/")]
@@ -82,7 +81,7 @@ fn prepare_action(
     action: Form<Action>,
     config: State<Config>,
     renderer: Renderer,
-    email_builder: EmailBuilder,
+    email_sender: EmailSender,
     db: DbConn,
 ) -> Result<Template, Error>
 {
@@ -127,11 +126,7 @@ fn prepare_action(
         "list_url": list_url.as_str(),
     }))?;
     // Build and send email
-    let email = email_builder.email(email_template)?
-        .to(action.email.as_str())
-        .build()?;
-    let mut mailer = email_builder.mailer()?;
-    mailer.send(email.into())?;
+    email_sender.email(email_template, action.email.as_str())?;
 
     // Render
     let list_url = uri!(list: email = &action.email);
@@ -185,9 +180,9 @@ fn cron(
     db: DbConn,
     config: State<Config>,
     renderer: Renderer,
-    email_builder: EmailBuilder,
+    email_sender: EmailSender,
 ) -> Result<(), Error> {
-    cron::update_nodes(&*db, &*config, renderer, email_builder)?;
+    cron::update_nodes(&*db, &*config, renderer, email_sender)?;
     Ok(())
 }
 

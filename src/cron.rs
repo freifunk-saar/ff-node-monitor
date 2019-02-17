@@ -20,14 +20,13 @@ use failure::{Error, Fail, bail};
 use serde_json::{self, json};
 use reqwest;
 use diesel;
-use lettre::Transport;
 
 use std::collections::HashMap;
 
 use crate::config;
 use crate::models;
 use crate::schema::*;
-use crate::util::EmailBuilder;
+use crate::util::EmailSender;
 
 #[derive(Debug, Fail)]
 enum NodeListError {
@@ -110,7 +109,7 @@ pub fn update_nodes(
     db: &PgConnection,
     config: &config::Config,
     renderer: config::Renderer,
-    email_builder: EmailBuilder,
+    email_sender: EmailSender,
 ) -> Result<(), Error> {
     let cur_nodes = reqwest::get(config.urls.nodes.clone())?;
     let cur_nodes: json::Nodes = serde_json::from_reader(cur_nodes)?;
@@ -184,7 +183,6 @@ pub fn update_nodes(
 
     // Send out notifications (not in the transaction as we don't really care here -- also
     // we have an external side-effect, the email, which we cannot roll back anyway)
-    let mut mailer = email_builder.mailer()?;
     for (id, cur_data) in changed.into_iter() {
         // See who monitors this node
         let watchers = {
@@ -203,10 +201,7 @@ pub fn update_nodes(
                 "list_url": list_url.as_str(),
             }))?;
             // Build and send email
-            let email = email_builder.email(email_template)?
-                .to(watcher.email.as_str())
-                .build()?;
-            mailer.send(email.into())?;
+            email_sender.email(email_template, watcher.email.as_str())?;
         }
     }
 
