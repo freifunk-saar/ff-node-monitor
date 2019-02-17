@@ -23,7 +23,6 @@
 #[macro_use] extern crate diesel as diesel_macros;
 
 // FIXME: Get rid of the remaining `macro_use` once we can
-#[macro_use] mod serde_enum_number;
 #[macro_use] mod util;
 mod routes;
 mod action;

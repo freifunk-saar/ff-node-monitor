@@ -25,15 +25,18 @@ use ring::{hmac, error};
 use failure::{Error, bail};
 use rmp_serde::to_vec as serialize_to_vec;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
 
 use crate::schema::*;
 use crate::models::*;
 use crate::util::EmailAddress;
 
-enum_number!(Operation {
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
+#[repr(u8)]
+pub enum Operation {
     Add = 1,
     Remove = 0,
-});
+}
 
 impl<'v> FromFormValue<'v> for Operation {
     type Error = &'v RawStr;
