@@ -21,14 +21,16 @@ use rocket::{
     request::{Outcome as ReqOutcome, FromRequest, FromFormValue},
     response::Responder,
     http::{Status, RawStr},
+    UriDisplayQuery,
 };
-use rocket_contrib::Template;
+use rocket_contrib::templates::Template;
 
-use failure::Error;
-use lettre_email;
-use lettre::smtp::{SMTP_PORT, SmtpTransport, SmtpTransportBuilder, ClientSecurity};
+use failure::{Fail, Error, bail};
+use mail::{Mail, Email, smtp, headers, HeaderTryFrom, default_impl::simple_context};
+use serde::{Serialize, Deserialize};
+use futures::Future;
 
-use config::Config;
+use crate::config::Config;
 
 use std::ops::Deref;
 
@@ -59,7 +61,7 @@ macro_rules! url_query {
 }
 
 /// Type for email addresses in Rocket forms
-#[derive(Serialize)]
+#[derive(Clone, Serialize, Deserialize, UriDisplayQuery)]
 pub struct EmailAddress(String);
 
 impl<'v> FromFormValue<'v> for EmailAddress {
@@ -92,7 +94,7 @@ impl Deref for EmailAddress {
 }
 
 /// Horribly hacky hack to get access to the Request, and then a template's body, for building emails
-pub struct EmailBuilder<'a, 'r: 'a> {
+pub struct EmailSender<'a, 'r> {
     request: &'a Request<'r>,
     config: &'a Config,
 }
@@ -107,38 +109,48 @@ enum ResponderError {
     NoBody,
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for EmailBuilder<'a, 'r> {
+impl<'a, 'r> FromRequest<'a, 'r> for EmailSender<'a, 'r> {
     type Error = ();
     fn from_request(request: &'a Request<'r>) -> ReqOutcome<Self, Self::Error> {
         let config = request.guard::<State<Config>>()?.inner();
-        Outcome::Success(EmailBuilder { request, config })
+        Outcome::Success(EmailSender { request, config })
     }
 }
 
-impl<'a, 'r> EmailBuilder<'a, 'r> {
+impl<'a, 'r> EmailSender<'a, 'r> {
     fn responder_body<'re>(&self, responder: impl Responder<'re>) -> Result<String, Error> {
         let mut resp = responder.respond_to(self.request)
             .map_err(|status| ResponderError::RenderFailure { status })?;
         Ok(resp.body_string().ok_or(ResponderError::NoBody)?)
     }
 
-    /// Begin building an email from a template
-    pub fn email(&self, email_template: Template) -> Result<lettre_email::EmailBuilder, Error> {
+    /// Build an email from a template and send it
+    pub fn email(&self, email_template: Template, to: &str) -> Result<(), Error> {
         let email_text = self.responder_body(email_template)?;
         let email_parts : Vec<&str> = email_text.splitn(4, '\n').collect();
         let (empty, email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2], email_parts[3]);
         assert!(empty.is_empty(), "The first line of the email template must be empty");
 
-        // Build email
-        Ok(lettre_email::EmailBuilder::new()
-            .from((self.config.ui.email_from.as_str(), email_from))
-            .subject(email_subject)
-            .text(email_body))
-    }
+        // Obtain a context
+        // FIXME: Normally you create this _once per application_. But we also need to know the domain...
+        let from = Email::try_from(self.config.ui.email_from.as_str())?;
+        let ctx = simple_context::new(from.domain.clone(), "ff-node-monitor".parse().unwrap()).unwrap();
 
-    /// Construct a mailer
-    pub fn mailer(&self) -> Result<SmtpTransport, Error> {
-        let host = self.config.secrets.get_smtp_host();
-        Ok(SmtpTransportBuilder::new((host, SMTP_PORT), ClientSecurity::None)?.build())
+        // Build email
+        let mut mail = Mail::plain_text(email_body, &ctx);
+        mail.insert_headers(headers! {
+            headers::_From: [(email_from, from.clone())],
+            headers::_To: [to],
+            headers::Subject: email_subject
+        }?);
+
+        // Send email
+        let config = if self.config.secrets.get_smtp_host() == "localhost" {
+            smtp::ConnectionConfig::builder_local_unencrypted().port(25).build()
+        } else {
+            let smtp_host = self.config.secrets.get_smtp_host();
+            smtp::ConnectionConfig::builder_with_port(smtp_host.parse()?, 25)?.build()
+        };
+        Ok(smtp::send(mail.into(), config, ctx).wait()?)
     }
 }

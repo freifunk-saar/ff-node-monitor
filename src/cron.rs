@@ -16,18 +16,17 @@
 
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
-use failure::Error;
-use serde_json;
+use failure::{Error, Fail, bail};
+use serde_json::{self, json};
 use reqwest;
 use diesel;
-use lettre::EmailTransport;
 
 use std::collections::HashMap;
 
-use config;
-use models;
-use schema::*;
-use util::EmailBuilder;
+use crate::config;
+use crate::models;
+use crate::schema::*;
+use crate::util::EmailSender;
 
 #[derive(Debug, Fail)]
 enum NodeListError {
@@ -39,11 +38,12 @@ enum NodeListError {
 
 mod json {
     use chrono::{DateTime, Utc};
+    use serde::Deserialize;
 
     #[derive(Deserialize, Debug)]
     crate struct NodeInfo {
-        crate node_id: String,
-        crate hostname: String,
+        crate node_id: Option<String>,
+        crate hostname: Option<String>,
     }
 
     #[derive(Deserialize, Debug)]
@@ -77,16 +77,16 @@ mod json {
 }
 
 // Just the data about the node (the RHS of the HashMap)
-#[derive(Clone, PartialEq, Eq, Serialize)]
+#[derive(Clone, PartialEq, Eq, serde::Deserialize)]
 struct NodeData {
     name: String,
     online: bool,
 }
 
 // From a JSON node, extract node ID and other information
-fn json_to_node_data(node: json::Node) -> (String, NodeData) {
-    let node_data = NodeData { name: node.nodeinfo.hostname, online: node.flags.online };
-    (node.nodeinfo.node_id, node_data)
+fn json_to_node_data(node: json::Node) -> Option<(String, NodeData)> {
+    let node_data = NodeData { name: node.nodeinfo.hostname?, online: node.flags.online };
+    Some((node.nodeinfo.node_id?, node_data))
 }
 
 fn model_to_node_data(node: models::NodeQuery) -> (String, NodeData) {
@@ -109,7 +109,7 @@ pub fn update_nodes(
     db: &PgConnection,
     config: &config::Config,
     renderer: config::Renderer,
-    email_builder: EmailBuilder,
+    email_sender: EmailSender,
 ) -> Result<(), Error> {
     let cur_nodes = reqwest::get(config.urls.nodes.clone())?;
     let cur_nodes: json::Nodes = serde_json::from_reader(cur_nodes)?;
@@ -121,8 +121,9 @@ pub fn update_nodes(
     // Build node HashMap: map node ID to name and online state
     let mut cur_nodes_map : HashMap<String, NodeData> = HashMap::new();
     for cur_node in cur_nodes.nodes.into_iter() {
-        let (id, data) = json_to_node_data(cur_node);
-        cur_nodes_map.insert(id, data);
+        if let Some((id, data)) = json_to_node_data(cur_node) {
+            cur_nodes_map.insert(id, data);
+        }
     }
 
     // Compute which nodes changed their state, also update node names in DB
@@ -182,7 +183,6 @@ pub fn update_nodes(
 
     // Send out notifications (not in the transaction as we don't really care here -- also
     // we have an external side-effect, the email, which we cannot roll back anyway)
-    let mut mailer = email_builder.mailer()?;
     for (id, cur_data) in changed.into_iter() {
         // See who monitors this node
         let watchers = {
@@ -201,10 +201,7 @@ pub fn update_nodes(
                 "list_url": list_url.as_str(),
             }))?;
             // Build and send email
-            let email = email_builder.email(email_template)?
-                .to(watcher.email.as_str())
-                .build()?;
-            mailer.send(&email)?;
+            email_sender.email(email_template, watcher.email.as_str())?;
         }
     }
 

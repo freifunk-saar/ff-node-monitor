@@ -16,27 +16,27 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 }}
 {{~#*inline "title"~}}
-  Knotenliste für {{form.email}}
+  Knotenliste für {{email}}
 {{~/inline~}}
 {{~#*inline "page"}}
   {{#each watched_nodes}}
   <div>
     <form method="post" action="prepare_action">
       <span class="node">
-      {{# if this[1] }}
-        <b>{{this[1].name}}</b> ({{this[1].id}}):
-        {{# if this[1].online }}
+      {{# if this.node }}
+        <b>{{this.node.name}}</b> ({{this.node.id}}):
+        {{# if this.node.online }}
             <span class="online">online</span>
         {{else}}
             <span class="offline">offline</span>
         {{/if}}
       {{else~}}
-        <i>?</i> ({{this[0].id}}): <span class="gone">verschwunden</span>
+        <i>?</i> ({{this.monitor.id}}): <span class="gone">verschwunden</span>
       {{/if}}
       </span>
-      <input type="hidden" name="email" value="{{this[0].email}}">
+      <input type="hidden" name="email" value="{{this.monitor.email}}">
       <input type="hidden" name="op" value="remove">
-      <input type="hidden" name="node" value="{{this[0].id}}">
+      <input type="hidden" name="node" value="{{this.monitor.id}}">
       <input type="submit" value="[x]" class="link">
     </form>
   </div>
@@ -56,7 +56,7 @@
     </div>
     <div class="button" style="align-self: end">
       <form method="post" action="prepare_action" id="list-form">
-        <input type="hidden" name="email" value="{{form.email}}">
+        <input type="hidden" name="email" value="{{email}}">
         <input type="hidden" name="op" value="add">
         <input type="submit" id="list-form-submit" value="Hinzufügen">
       </form>

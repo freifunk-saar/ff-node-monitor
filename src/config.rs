@@ -14,24 +14,22 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::{self, State, Outcome};
+use rocket::{self, State, Outcome, http::uri};
 use rocket::request::{self, Request, FromRequest};
 use rocket::fairing::{Fairing, AdHoc};
-use rocket_contrib::Template;
+use rocket_contrib::templates::Template;
 
 use toml;
 use url::Url;
 use url_serde;
-use serde::Deserialize;
-use serde::de::IntoDeserializer;
+use serde::{Deserialize, Serialize, de::IntoDeserializer};
+use serde_json::{self, json};
 use ring::hmac;
-use serde_json;
-use failure::Error;
+use failure::{Error, bail};
 
 use std::borrow::Cow;
 
-use db_conn;
-use util;
+use crate::util;
 
 #[derive(Serialize, Deserialize)]
 pub struct Ui {
@@ -51,9 +49,22 @@ pub struct Urls {
     pub stylesheet: Option<String>,
 }
 
+impl Urls {
+    pub fn absolute(&self, origin: uri::Origin) -> String {
+        // get root, with trailing `/` removed
+        let mut str = self.root.as_str().trim_end_matches('/').to_owned();
+        // add `origin`
+        str.push_str(origin.path());
+        if let Some(query) = origin.query() {
+            str.push('?');
+            str.push_str(query);
+        }
+        str
+    }
+}
+
 #[derive(Deserialize)]
 pub struct Secrets {
-    pub postgres_url: String,
     pub smtp_host: Option<String>,
     #[serde(with = "util::hex_signing_key")]
     pub action_signing_key: hmac::SigningKey,
@@ -83,15 +94,13 @@ impl Config {
 }
 
 pub fn fairing(section: &'static str) -> impl Fairing {
-    AdHoc::on_attach(move |rocket| {
+    AdHoc::on_attach("Parse application configuration", move |rocket| {
         let config = {
             let config_table = rocket.config().get_table(section)
                 .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
             Config::new(config_table)
         };
-        Ok(rocket
-            .manage(db_conn::init_db_pool(config.secrets.postgres_url.as_str()))
-            .manage(config))
+        Ok(rocket.manage(config))
     })
 }
 

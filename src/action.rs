@@ -16,21 +16,27 @@
 
 use rocket::request::FromFormValue;
 use rocket::http::RawStr;
+use rocket::FromForm;
 
 use diesel::prelude::*;
 use diesel;
 use diesel::result::{Error as DieselError, DatabaseErrorKind};
 use ring::{hmac, error};
-use failure::Error;
+use failure::{Error, bail};
 use rmp_serde::to_vec as serialize_to_vec;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
 
-use schema::*;
-use models::*;
+use crate::schema::*;
+use crate::models::*;
+use crate::util::EmailAddress;
 
-enum_number!(Operation {
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
+#[repr(u8)]
+pub enum Operation {
     Add = 1,
     Remove = 0,
-});
+}
 
 impl<'v> FromFormValue<'v> for Operation {
     type Error = &'v RawStr;
@@ -47,7 +53,7 @@ impl<'v> FromFormValue<'v> for Operation {
 #[derive(Serialize, Deserialize, FromForm, Clone)]
 pub struct Action {
     pub node: String,
-    pub email: String,
+    pub email: EmailAddress,
     pub op: Operation,
 }
 

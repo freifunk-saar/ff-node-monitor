@@ -14,63 +14,57 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::response::NamedFile;
-use rocket::{State, request::Form};
-use rocket_contrib::Template;
+use rocket::{State, request::Form, FromForm};
+use rocket::{get, post, routes, uri};
+use rocket_contrib::templates::Template;
 
 use diesel::prelude::*;
 use failure::Error;
-use lettre::EmailTransport;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
+use serde_json::json;
+use serde::Serialize;
 
-use std::path::{Path, PathBuf};
 use std::collections::HashSet;
-use std::io;
 
-use db_conn::DbConn;
-use action::*;
-use models::*;
-use config::{Config, Renderer};
-use util::{EmailAddress, EmailBuilder};
-use cron;
+use crate::DbConn;
+use crate::action::*;
+use crate::models::*;
+use crate::config::{Config, Renderer};
+use crate::util::{EmailAddress, EmailSender};
+use crate::cron;
 
 #[get("/")]
 fn index(renderer: Renderer) -> Result<Template, Error> {
     renderer.render("index", json!({}))
 }
 
-#[derive(Serialize, FromForm)]
-struct ListForm {
-    email: EmailAddress,
-}
-
-#[get("/list?<form>")]
-fn list(form: ListForm, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
-    use schema::*;
+#[get("/list?<email>")]
+fn list(email: EmailAddress, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
+    use crate::schema::*;
 
     db.transaction::<_, Error, _>(|| {
         let watched_nodes = monitors::table
-            .filter(monitors::email.eq(form.email.as_str()))
+            .filter(monitors::email.eq(email.as_str()))
             .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
             .order_by(monitors::id)
-            .load::<(MonitorQuery, Option<NodeQuery>)>(&*db)?;
-        let all_nodes : Vec<NodeQuery> = {
+            .load::<MonitorNodeQuery>(&*db)?;
+        let all_nodes = {
             let watched_node_ids : HashSet<&str> = watched_nodes.iter()
-                .filter_map(|node| node.1.as_ref())
+                .filter_map(|node| node.node.as_ref())
                 .map(|node| node.id.as_str())
                 .collect();
-            // Diesel does not support joining to a subquery to we have to do the filtering in Rust
+            // Diesel does not support joining to a subquery so we have to do the filtering in Rust
             nodes::table
                 .order_by(nodes::name)
                 .load::<NodeQuery>(&*db)?
                 .into_iter()
                 .filter(|node| !watched_node_ids.contains(&node.id.as_ref()))
-                .collect()
+                .collect::<Vec<NodeQuery>>()
         };
         renderer.render("list", json!({
-            "form": form,
+            "email": email,
             "watched_nodes": watched_nodes,
             "all_nodes": all_nodes,
         }))
@@ -87,11 +81,11 @@ fn prepare_action(
     action: Form<Action>,
     config: State<Config>,
     renderer: Renderer,
-    email_builder: EmailBuilder,
+    email_sender: EmailSender,
     db: DbConn,
 ) -> Result<Template, Error>
 {
-    use schema::*;
+    use crate::schema::*;
 
     let action = action.into_inner();
 
@@ -132,40 +126,35 @@ fn prepare_action(
         "list_url": list_url.as_str(),
     }))?;
     // Build and send email
-    let email = email_builder.email(email_template)?
-        .to(action.email.as_str())
-        .build()?;
-    let mut mailer = email_builder.mailer()?;
-    mailer.send(&email)?;
+    email_sender.email(email_template, action.email.as_str())?;
 
     // Render
-    let list_url = url_query!(config.urls.root.join("list")?,
-        email = action.email);
+    let list_url = uri!(list: email = &action.email);
     renderer.render("prepare_action", json!({
         "action": action,
         "node_name": node_name,
-        "list_url": list_url.as_str(),
+        "list_url": config.urls.absolute(list_url),
     }))
 }
 
 #[derive(Serialize, FromForm)]
-struct RunActionForm {
+struct RunAction {
     signed_action: String,
 }
 
-#[get("/run_action?<form>")]
+#[get("/run_action?<form..>")]
 fn run_action(
-    form: RunActionForm,
+    form: Form<RunAction>,
     db: DbConn,
     renderer: Renderer,
     config: State<Config>
 ) -> Result<Template, Error> {
     // Determine and verify action
-    let action : Result<Action, Error> = do catch {
+    let action : Result<Action, Error> = (|| {
         let signed_action = base64::decode(form.signed_action.as_str())?;
         let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
-        signed_action.verify(&config.secrets.action_signing_key)?
-    };
+        Ok(signed_action.verify(&config.secrets.action_signing_key)?)
+    })();
     let action = match action {
         Ok(a) => a,
         Err(_) => {
@@ -191,22 +180,12 @@ fn cron(
     db: DbConn,
     config: State<Config>,
     renderer: Renderer,
-    email_builder: EmailBuilder,
+    email_sender: EmailSender,
 ) -> Result<(), Error> {
-    cron::update_nodes(&*db, &*config, renderer, email_builder)?;
+    cron::update_nodes(&*db, &*config, renderer, email_sender)?;
     Ok(())
 }
 
-#[get("/static/<file..>")]
-fn static_file(file: PathBuf) -> Result<Option<NamedFile>, Error> {
-    // Using Option<...> turns errors into 404
-    Ok(match NamedFile::open(Path::new("static/").join(file)) {
-        Ok(x) => Some(x),
-        Err(ref x) if x.kind() == io::ErrorKind::NotFound => None,
-        Err(x) => bail!(x),
-    })
-}
-
 pub fn routes() -> Vec<::rocket::Route> {
-    routes![index, list, list_formfail, prepare_action, run_action, cron, static_file]
+    routes![index, list, list_formfail, prepare_action, run_action, cron]
 }

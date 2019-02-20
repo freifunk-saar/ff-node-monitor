@@ -14,7 +14,9 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use schema::*;
+use serde::Serialize;
+
+use crate::schema::*;
 
 #[derive(Queryable, Serialize)]
 pub struct MonitorQuery {
@@ -34,6 +36,14 @@ pub struct NodeQuery {
     pub id: String,
     pub name: String,
     pub online: bool,
+}
+
+#[derive(Queryable, Serialize)]
+pub struct MonitorNodeQuery {
+    /// Details for what is being monitored
+    pub monitor: MonitorQuery,
+    /// If this monitors an existing node, information about that node
+    pub node: Option<NodeQuery>,
 }
 
 #[derive(Insertable, Identifiable)]

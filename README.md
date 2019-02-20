@@ -26,7 +26,7 @@ the steps accordingly.
 2.  We need some development libraries for the build process:
 
     ```
-    sudo apt install libssl-dev libpq-dev curl build-essential pkg-config
+    sudo apt install libssl-dev libpq-dev libc6-dev curl gcc pkg-config
     ```
 
 3.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
@@ -34,9 +34,12 @@ the steps accordingly.
 
     ```
     curl https://sh.rustup.rs -sSf > rustup.sh
-    sudo -u ff-node-monitor sh rustup.sh --default-toolchain nightly
+    sudo -u ff-node-monitor sh rustup.sh --default-toolchain $(cat rust-version)
     rm rustup.sh
     ```
+
+    The file `rust-version` always contains a tested nightly version number. If
+    you want the latest nightly version instead, just use `--default-toolchain nightly` .
 
 4.  Now we can fetch the sources and build them:
 
@@ -46,13 +49,22 @@ the steps accordingly.
     sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
-    If that fails, it is possible that the latest Rust nightly is incompatible
-    with one of the dependencies.  You can install and use a tested version
-    using:
+
+5.  If you want to save some disk space, you can now clean up the build directory:
 
     ```
-    sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
+    rm -rf target/release/{build,deps,incremental,.fingerprint}
     ```
+
+    Over time, you will also accumulate more and more different Rust versions.
+    You can use
+
+    ```
+    sudo -u ff-node-monitor ~ff-node-monitor/.cargo/bin/rustup toolchain list
+    ```
+
+    to see which versions you have installed, and then `toolchain uninstall`
+    the ones you do not need any more (all but the last, most likely).
 
 ### Database setup
 
@@ -79,7 +91,7 @@ the steps accordingly.
     directory.  You can start by copying the template:
 
     ```
-    cd /opt/ff-node-monitor/src
+    cd ~ff-node-monitor/src
     sudo -u ff-node-monitor cp Rocket.toml.dist Rocket.toml
     chmod 600 Rocket.toml
     ```
@@ -128,17 +140,17 @@ the steps accordingly.
     (as configured in `Rocket.toml`):
 
     ```
-    */5 * * * *    curl $ROOT_URL/cron
+    */5 * * * *    curl -s $ROOT_URL/cron
     ```
 
 That's it!  The service should now be running and working.
 
 ## Upgrade
 
-Upgrade the service to the latest git version with these steps:
+To upgrade the service to the latest git version, follow these steps:
 
 ```
-cd /opt/ff-node-monitor/src/
+cd ~ff-node-monitor/src/
 git pull
 sudo rm target/release/ff-node-monitor
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
@@ -146,14 +158,21 @@ sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
 sudo systemctl restart ff-node-monitor
 ```
 
-Make sure to check `Rocket.toml.dist` for new mandatory config options and adapt
-your config if necessary.
+Check [the CHANGELOG](CHANGELOG.md) to see if any manual steps are needed.
+
+## Debugging
+
+When something goes wrong, the first step should be to look at the error log:
+
+```
+sudo journalctl -u ff-node-monitor.service
+```
 
 ## Customization
 
 If you want to adapt the node monitor to the layout of your web presence, you
-can set `stylesheet` to an external CSS file in your `Rocket.toml`. Put any images, you need
-into `src/static/`. Here a CSS-example:
+can set `stylesheet` to an external CSS file in your `Rocket.toml`.
+Put any images and other static data into `src/static/`. Here a CSS-example:
 
 ```
 #title {
@@ -162,3 +181,38 @@ into `src/static/`. Here a CSS-example:
     background-repeat: no-repeat;
 }
 ```
+
+## Development Virtual Environment
+
+You can easily set up a test VM using Vagrant.
+
+If you want to tweak the default configuration (which you do not have to), first
+copy the default config file `vagrant.config.dist` to `vagrant.config` and
+customize the configuration. Then follow these steps:
+
+```
+sudo apt install vagrant
+cd vagrant
+vagrant up ff-service
+```
+
+This will take a while, downloading the Vagrant box and install a running system
+inside. You can adapt `bootstrap.sh` as you like to test around with different
+settings. In your real setup you at least have to change the root URL where you
+will be hosting ff-node-monitor.
+
+You can then access the vagrant box at *http://localhost:8833`. If you want to
+login the server use
+
+```
+vagrant ssh ff-service
+```
+
+If you want to delete and start over use
+
+```
+vagrant destroy ff-service
+vagrant up ff-service
+```
+
+If you want to send out emails configure `/etc/ssmtp/ssmtp.conf`.
