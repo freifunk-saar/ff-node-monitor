@@ -172,6 +172,15 @@ sudo journalctl -u ff-node-monitor.service
 
 If you want to adapt the node monitor to the layout of your web presence, you
 can set `stylesheet` to an external CSS file in your `Rocket.toml`.
+Put any images and other static data into `src/static/`. Here a CSS-example:
+
+```
+#title {
+    padding-top: 131px;
+    background: url('static/logo.png');
+    background-repeat: no-repeat;
+}
+```
 
 ## Development Virtual Environment
 
