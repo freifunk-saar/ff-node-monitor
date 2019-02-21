@@ -14,7 +14,7 @@ I have tested the following steps on a Debian Stretch system; if you are using a
 different version or a different distribution, you might have to change some of
 the steps accordingly.
 
-Make sure you have at least 1.5 GB free diskspace.
+Make sure you have at least 1.5 GB free disk space.
 
 ### Build Process
 
@@ -115,10 +115,10 @@ Make sure you have at least 1.5 GB free diskspace.
     and fix whatever issue has come up.
 
 10. To expose the service on the internet, set up a reverse proxy in your main
-    web server. Here's how that could look like for `nginx` (this is a snippet of
-    the site configuration), using the `node-monitor` subdirectory:
-
-    10.1. edit your config file for your domain, e.g. `/etc/nginx/sites-enabled/ff-alpha-centauri.conf`
+    web server. If you are not already running a web server, `nginx` is a good
+    choice.  You will have to edit your site configuration, usually located at
+    `/etc/nginx/sites-enabled/default`.  Here's the necessary snippet, mounting
+    the node monitor in the `node-monitor` subdirectory:
 
     ```
     location /node-monitor/ {
@@ -130,7 +130,8 @@ Make sure you have at least 1.5 GB free diskspace.
     }
     ```
 
-    10.2. Test config and reload nginx
+    Test your configuration and reload nginx:
+
     ```
     nginx -t
     service nginx reload
