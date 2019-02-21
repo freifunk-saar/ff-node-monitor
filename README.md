@@ -14,6 +14,8 @@ I have tested the following steps on a Debian Stretch system; if you are using a
 different version or a different distribution, you might have to change some of
 the steps accordingly.
 
+Make sure you have at least 1.5 GB free diskspace.
+
 ### Build Process
 
 1.  First, let's create a user for this service, and change to its home directory:
@@ -68,13 +70,13 @@ the steps accordingly.
 
 ### Database setup
 
-1.  *ff-node-monitor* needs PostgreSQL as a database backend:
+6.  *ff-node-monitor* needs PostgreSQL as a database backend:
 
     ```
     sudo apt install postgresql
     ```
 
-2.  We will use the `ff-node-monitor` system user to access PostgreSQL, and we
+7.  We will use the `ff-node-monitor` system user to access PostgreSQL, and we
     need to create a database for the service:
 
     ```
@@ -87,19 +89,19 @@ the steps accordingly.
 
 ### Service setup
 
-1.  The service loads its configuration from a `Rocket.toml` file in the source
+8.  The service loads its configuration from a `Rocket.toml` file in the source
     directory.  You can start by copying the template:
 
     ```
-    cd ~ff-node-monitor/src
+    cd /opt/ff-node-monitor/src
     sudo -u ff-node-monitor cp Rocket.toml.dist Rocket.toml
     chmod 600 Rocket.toml
     ```
 
-    Most of the values in there will need to be changed; see the comments in the
+    Most of the values in your `Rocket.toml` will need to be changed; see the comments in the
     template for what to do and how.
 
-2.  To run the service using systemd, the `.service` file needs to be installed:
+9.  To run the service using systemd, the `.service` file needs to be installed:
 
     ```
     sudo cp ff-node-monitor.service /etc/systemd/system/
@@ -112,9 +114,11 @@ the steps accordingly.
     If the last command does not show the service as running, you need to debug
     and fix whatever issue has come up.
 
-3.  To expose the service on the internet, set up a reverse proxy in your main
-    web server.  Here's how that could look like for nginx (this is a snippet of
+10. To expose the service on the internet, set up a reverse proxy in your main
+    web server. Here's how that could look like for `nginx` (this is a snippet of
     the site configuration), using the `node-monitor` subdirectory:
+
+    10.1. edit your config file for your domain, e.g. `/etc/nginx/sites-enabled/ff-alpha-centauri.conf`
 
     ```
     location /node-monitor/ {
@@ -126,10 +130,16 @@ the steps accordingly.
     }
     ```
 
+    10.2. Test config and reload nginx
+    ```
+    nginx -t
+    service nginx reload
+    ```
+
     Now, accessing the service at whatever `root` URL you configured in the
     `Rocket.toml` should work.
 
-4.  Finally, the service relies on a cron job to regularly check in on all the
+11. Finally, the service relies on a cron job to regularly check in on all the
     nodes and send notifications when their status changed:
 
     ```
@@ -150,7 +160,7 @@ That's it!  The service should now be running and working.
 To upgrade the service to the latest git version, follow these steps:
 
 ```
-cd ~ff-node-monitor/src/
+cd /opt/ff-node-monitor/src/
 git pull
 sudo rm target/release/ff-node-monitor
 sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
@@ -201,7 +211,7 @@ inside. You can adapt `bootstrap.sh` as you like to test around with different
 settings. In your real setup you at least have to change the root URL where you
 will be hosting ff-node-monitor.
 
-You can then access the vagrant box at *http://localhost:8833`. If you want to
+You can then access the vagrant box at `http://localhost:8833`. If you want to
 login the server use
 
 ```
