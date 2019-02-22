@@ -51,8 +51,12 @@ Make sure you have at least 1.5 GB free disk space.
     sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
+    > The build process takes a while, you can already finish the Database Setup
+    > (steps 6. and 7.) and part of the Service Setup (step 8. and 10.) in a
+    > second shell as the build process continues.
 
-5.  If you want to save some disk space, you can now clean up the build directory:
+5.  This step is optional, but if you want to save some disk space, you can now
+    clean up the build directory:
 
     ```
     rm -rf target/release/{build,deps,incremental,.fingerprint}
