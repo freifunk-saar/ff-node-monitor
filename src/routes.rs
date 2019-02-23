@@ -150,11 +150,11 @@ fn run_action(
     config: State<Config>
 ) -> Result<Template, Error> {
     // Determine and verify action
-    let action : Result<Action, Error> = (|| {
+    let action : Result<Action, Error> = try {
         let signed_action = base64::decode(form.signed_action.as_str())?;
         let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
-        Ok(signed_action.verify(&config.secrets.action_signing_key)?)
-    })();
+        signed_action.verify(&config.secrets.action_signing_key)?
+    };
     let action = match action {
         Ok(a) => a,
         Err(_) => {
