@@ -26,6 +26,7 @@ use serde::{Deserialize, Serialize, de::IntoDeserializer};
 use serde_json::{self, json};
 use ring::hmac;
 use failure::{Error, bail};
+use mail::{Email, HeaderTryFrom, default_impl::simple_context};
 
 use std::borrow::Cow;
 
@@ -100,7 +101,12 @@ pub fn fairing(section: &'static str) -> impl Fairing {
                 .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
             Config::new(config_table)
         };
-        Ok(rocket.manage(config))
+        let mail_ctx = {
+            let from = Email::try_from(config.ui.email_from.as_str()).expect("`email_from` is not a valid email address");
+            // FIXME: use Uuid instead of fixed string
+            simple_context::new(from.domain.clone(), "ff-node-monitor".parse().unwrap()).unwrap();
+        };
+        Ok(rocket.manage(config).manage(mail_ctx))
     })
 }
 

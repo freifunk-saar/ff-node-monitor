@@ -97,6 +97,7 @@ impl Deref for EmailAddress {
 pub struct EmailSender<'a, 'r> {
     request: &'a Request<'r>,
     config: &'a Config,
+    mail_ctx: &'a simple_context::Context,
 }
 
 #[derive(Debug, Fail)]
@@ -113,7 +114,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for EmailSender<'a, 'r> {
     type Error = ();
     fn from_request(request: &'a Request<'r>) -> ReqOutcome<Self, Self::Error> {
         let config = request.guard::<State<Config>>()?.inner();
-        Outcome::Success(EmailSender { request, config })
+        let mail_ctx = request.guard::<State<simple_context::Context>>()?.inner();
+        Outcome::Success(EmailSender { request, config, mail_ctx })
     }
 }
 
@@ -131,15 +133,11 @@ impl<'a, 'r> EmailSender<'a, 'r> {
         let (empty, email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2], email_parts[3]);
         assert!(empty.is_empty(), "The first line of the email template must be empty");
 
-        // Obtain a context
-        // FIXME: Normally you create this _once per application_. But we also need to know the domain...
-        let from = Email::try_from(self.config.ui.email_from.as_str())?;
-        let ctx = simple_context::new(from.domain.clone(), "ff-node-monitor".parse().unwrap()).unwrap();
-
         // Build email
-        let mut mail = Mail::plain_text(email_body, &ctx);
+        let from = Email::try_from(self.config.ui.email_from.as_str())?;
+        let mut mail = Mail::plain_text(email_body, self.mail_ctx);
         mail.insert_headers(headers! {
-            headers::_From: [(email_from, from.clone())],
+            headers::_From: [(email_from, from)],
             headers::_To: [to],
             headers::Subject: email_subject
         }?);
@@ -151,6 +149,6 @@ impl<'a, 'r> EmailSender<'a, 'r> {
             let smtp_host = self.config.secrets.get_smtp_host();
             smtp::ConnectionConfig::builder_with_port(smtp_host.parse()?, 25)?.build()
         };
-        Ok(smtp::send(mail.into(), config, ctx).wait()?)
+        Ok(smtp::send(mail.into(), config, self.mail_ctx.clone()).wait()?)
     }
 }
