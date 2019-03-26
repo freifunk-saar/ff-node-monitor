@@ -27,6 +27,7 @@ use serde_json::{self, json};
 use ring::hmac;
 use failure::{Error, bail};
 use mail::{Email, HeaderTryFrom, default_impl::simple_context};
+use uuid::Uuid;
 
 use std::borrow::Cow;
 
@@ -103,8 +104,8 @@ pub fn fairing(section: &'static str) -> impl Fairing {
         };
         let mail_ctx = {
             let from = Email::try_from(config.ui.email_from.as_str()).expect("`email_from` is not a valid email address");
-            // FIXME: use Uuid instead of fixed string
-            simple_context::new(from.domain.clone(), "ff-node-monitor".parse().unwrap()).unwrap();
+            let unique_part = Uuid::new_v4().to_string().parse().unwrap();
+            simple_context::new(from.domain, unique_part).unwrap();
         };
         Ok(rocket.manage(config).manage(mail_ctx))
     })
