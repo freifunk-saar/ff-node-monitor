@@ -48,40 +48,32 @@ pub mod hex_signing_key {
     }
 }
 
-/// Macro for generating URLs with query parameters
-macro_rules! url_query {
-    ( $url:expr, $( $name:ident = $value:expr ),* ) => {
-        {
-            let mut url = $url;
-            url.query_pairs_mut()
-                $(.append_pair(stringify!($name), $value.as_ref()))*;
-            url
-        }
-    };
-}
-
 /// Type for email addresses in Rocket forms
 #[derive(Clone, Serialize, Deserialize, UriDisplayQuery)]
 pub struct EmailAddress(String);
+
+impl EmailAddress {
+    pub fn new(s: String) -> Result<EmailAddress, Error> {
+        let email_parts : Vec<&str> = s.split('@').collect();
+        if email_parts.len() != 2 {
+            bail!("Too many or two few @");
+        }
+        if email_parts[0].is_empty() {
+            bail!("User part is empty");
+        }
+        if email_parts[1].find('.').is_none() {
+            bail!("Domain part must contain .");
+        }
+        Ok(EmailAddress(s))
+    }
+}
 
 impl<'v> FromFormValue<'v> for EmailAddress {
     type Error = Error;
 
     fn from_form_value(v: &'v RawStr) -> Result<EmailAddress, Error> {
         let s = v.url_decode()?;
-        {
-            let email_parts : Vec<&str> = s.split('@').collect();
-            if email_parts.len() != 2 {
-                bail!("Too many or two few @");
-            }
-            if email_parts[0].is_empty() {
-                bail!("User part is empty");
-            }
-            if email_parts[1].find('.').is_none() {
-                bail!("Domain part must contain .");
-            }
-        }
-        Ok(EmailAddress(s))
+        EmailAddress::new(s)
     }
 }
 

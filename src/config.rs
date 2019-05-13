@@ -53,15 +53,7 @@ pub struct Urls {
 
 impl Urls {
     pub fn absolute(&self, origin: uri::Origin) -> String {
-        // get root, with trailing `/` removed
-        let mut str = self.root.as_str().trim_end_matches('/').to_owned();
-        // add `origin`
-        str.push_str(origin.path());
-        if let Some(query) = origin.query() {
-            str.push('?');
-            str.push_str(query);
-        }
-        str
+        format!("{}{}", self.root.as_str().trim_end_matches('/'), origin)
     }
 }
 

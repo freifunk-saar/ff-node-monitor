@@ -14,7 +14,7 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::{State, request::Form, FromForm};
+use rocket::{State, request::Form};
 use rocket::{get, post, routes, uri};
 use rocket_contrib::templates::Template;
 
@@ -24,7 +24,6 @@ use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
 use serde_json::json;
-use serde::Serialize;
 
 use std::collections::HashSet;
 
@@ -95,10 +94,8 @@ fn prepare_action(
     let signed_action = base64::encode(&signed_action);
 
     // compute some URLs
-    let action_url = url_query!(config.urls.root.join("run_action")?,
-        signed_action = signed_action);
-    let list_url = url_query!(config.urls.root.join("list")?,
-        email = action.email);
+    let action_url = config.urls.absolute(uri!(run_action: signed_action = &signed_action));
+    let list_url = config.urls.absolute(uri!(list: email = &action.email));
 
     // obtain user-readable node name
     let node = nodes::table
@@ -129,29 +126,23 @@ fn prepare_action(
     email_sender.email(email_template, action.email.as_str())?;
 
     // Render
-    let list_url = uri!(list: email = &action.email);
     renderer.render("prepare_action", json!({
         "action": action,
         "node_name": node_name,
-        "list_url": config.urls.absolute(list_url),
+        "list_url": list_url,
     }))
 }
 
-#[derive(Serialize, FromForm)]
-struct RunAction {
-    signed_action: String,
-}
-
-#[get("/run_action?<form..>")]
+#[get("/run_action?<signed_action>")]
 fn run_action(
-    form: Form<RunAction>,
+    signed_action: String,
     db: DbConn,
     renderer: Renderer,
     config: State<Config>
 ) -> Result<Template, Error> {
     // Determine and verify action
     let action : Result<Action, Error> = try {
-        let signed_action = base64::decode(form.signed_action.as_str())?;
+        let signed_action = base64::decode(signed_action.as_str())?;
         let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
         signed_action.verify(&config.secrets.action_signing_key)?
     };
@@ -166,11 +157,10 @@ fn run_action(
     let success = action.run(&*db)?;
 
     // Render
-    let list_url = url_query!(config.urls.root.join("list")?,
-        email = action.email);
+    let list_url = config.urls.absolute(uri!(list: email = &action.email));
     renderer.render("run_action", json!({
         "action": action,
-        "list_url": list_url.as_str(),
+        "list_url": list_url,
         "success": success,
     }))
 }

@@ -14,6 +14,7 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use rocket::uri;
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use failure::{Error, Fail, bail};
@@ -27,6 +28,8 @@ use crate::config;
 use crate::models;
 use crate::schema::*;
 use crate::util::EmailSender;
+use crate::routes;
+use crate::util::EmailAddress;
 
 #[derive(Debug, Fail)]
 enum NodeListError {
@@ -194,8 +197,8 @@ pub fn update_nodes(
         let node = cur_data.into_model(id);
         for watcher in watchers.iter() {
             // Generate email text
-            let list_url = url_query!(config.urls.root.join("list")?,
-                email = watcher.email);
+            let email = EmailAddress::new(watcher.email.clone()).unwrap();
+            let list_url = config.urls.absolute(uri!(routes::list: email = &email));
             let email_template = renderer.render("notification", json!({
                 "node": node,
                 "list_url": list_url.as_str(),
