@@ -230,4 +230,33 @@ vagrant destroy ff-service
 vagrant up ff-service
 ```
 
-If you want to send out emails configure `/etc/ssmtp/ssmtp.conf`.
+If you want to send out emails configure [msmtp](https://wiki.debian.org/msmtp)
+
+For gmail (with deactivated 2-factor login) use this configuration in `/etc/msmtprc`:
+
+```
+# Set default values for all following accounts.
+defaults
+port 587
+tls on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+
+account gmail
+host smtp.gmail.com
+from <user>@gmail.com
+auth on
+user <user>
+password <your password>
+
+# Set a default account
+account default : gmail
+```
+
+To test it run
+
+```
+echo -e "Subject: msmtp test\nhello test." | msmtp _recipient_address_
+```
+
+You should find your sent e-mail in the recipient's inbox shortly afterwards. 
+
