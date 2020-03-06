@@ -230,7 +230,7 @@ vagrant destroy ff-service
 vagrant up ff-service
 ```
 
-If you want to send out emails configure [msmtp](https://wiki.debian.org/msmtp)
+If you want to send out emails, one easy option is [msmtp](https://wiki.debian.org/msmtp).
 
 For gmail (with deactivated 2-factor login) use this configuration in `/etc/msmtprc`:
 
@@ -259,4 +259,3 @@ echo -e "Subject: msmtp test\nhello test." | msmtp _recipient_address_
 ```
 
 You should find your sent e-mail in the recipient's inbox shortly afterwards. 
-
