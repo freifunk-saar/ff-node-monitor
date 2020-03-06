@@ -34,7 +34,7 @@ sudo chown $FFNM_USERNAME .
 ffsudo="sudo -u $FFNM_USERNAME"
 
 : "#### We need some development libraries for the build process:"
-sudo apt update && sudo apt -y --no-install-recommends install git ssmtp libc6-dev libssl-dev libpq-dev curl gcc pkg-config
+sudo apt update && sudo apt -y --no-install-recommends install git msmtp libc6-dev libssl-dev libpq-dev curl gcc pkg-config
 
 : "#### setup locale"
 sed -i 's/# \(\(de_DE\|en_US\)\.UTF-8 UTF-8\)/\1/' /etc/locale.gen && dpkg-reconfigure --frontend=noninteractive locales
