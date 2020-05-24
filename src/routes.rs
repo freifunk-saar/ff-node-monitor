@@ -19,7 +19,7 @@ use rocket::{get, post, routes, uri};
 use rocket_contrib::templates::Template;
 
 use diesel::prelude::*;
-use failure::Error;
+use anyhow::Result;
 use rmp_serde::to_vec as serialize_to_vec;
 use rmp_serde::from_slice as deserialize_from_slice;
 use base64;
@@ -35,15 +35,15 @@ use crate::util::{EmailAddress, EmailSender};
 use crate::cron;
 
 #[get("/")]
-fn index(renderer: Renderer) -> Result<Template, Error> {
+fn index(renderer: Renderer) -> Result<Template> {
     renderer.render("index", json!({}))
 }
 
 #[get("/list?<email>")]
-fn list(email: EmailAddress, renderer: Renderer, db: DbConn) -> Result<Template, Error> {
+fn list(email: EmailAddress, renderer: Renderer, db: DbConn) -> Result<Template> {
     use crate::schema::*;
 
-    db.transaction::<_, Error, _>(|| {
+    db.transaction::<_, anyhow::Error, _>(|| {
         let watched_nodes = monitors::table
             .filter(monitors::email.eq(email.as_str()))
             .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
@@ -71,7 +71,7 @@ fn list(email: EmailAddress, renderer: Renderer, db: DbConn) -> Result<Template,
 }
 
 #[get("/list")]
-fn list_formfail(renderer: Renderer) -> Result<Template, Error> {
+fn list_formfail(renderer: Renderer) -> Result<Template> {
     renderer.render("list_error", json!({}))
 }
 
@@ -82,7 +82,7 @@ fn prepare_action(
     renderer: Renderer,
     email_sender: EmailSender,
     db: DbConn,
-) -> Result<Template, Error>
+) -> Result<Template>
 {
     use crate::schema::*;
 
@@ -139,9 +139,9 @@ fn run_action(
     db: DbConn,
     renderer: Renderer,
     config: State<Config>
-) -> Result<Template, Error> {
+) -> Result<Template> {
     // Determine and verify action
-    let action : Result<Action, Error> = try {
+    let action : Result<Action> = try {
         let signed_action = base64::decode(signed_action.as_str())?;
         let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
         signed_action.verify(&config.secrets.action_signing_key)?
@@ -171,7 +171,7 @@ fn cron(
     config: State<Config>,
     renderer: Renderer,
     email_sender: EmailSender,
-) -> Result<(), Error> {
+) -> Result<()> {
     cron::update_nodes(&*db, &*config, renderer, email_sender)?;
     Ok(())
 }

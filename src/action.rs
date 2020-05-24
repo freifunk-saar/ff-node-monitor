@@ -22,7 +22,7 @@ use diesel::prelude::*;
 use diesel;
 use diesel::result::{Error as DieselError, DatabaseErrorKind};
 use ring::{hmac, error};
-use failure::{Error, bail};
+use anyhow::{Result, bail};
 use rmp_serde::to_vec as serialize_to_vec;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
@@ -84,9 +84,9 @@ impl Action {
         SignedAction { action: self, signature }
     }
 
-    pub fn run(&self, db: &PgConnection) -> Result<bool, Error> {
+    pub fn run(&self, db: &PgConnection) -> Result<bool> {
         let m = Monitor { id: self.node.as_str(), email: self.email.as_str() };
-        db.transaction::<_, Error, _>(|| {
+        db.transaction::<_, anyhow::Error, _>(|| {
             Ok(match self.op {
                 Operation::Add => {
                     // Add node.  We are fine if it does not exist.

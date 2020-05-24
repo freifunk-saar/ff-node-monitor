@@ -17,7 +17,8 @@
 use rocket::uri;
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
-use failure::{Error, Fail, bail};
+use anyhow::{Result, bail};
+use thiserror::Error;
 use serde_json::{self, json};
 use reqwest;
 use diesel;
@@ -31,9 +32,9 @@ use crate::util::EmailSender;
 use crate::routes;
 use crate::util::EmailAddress;
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 enum NodeListError {
-    #[fail(display = "got unsupported version number {}", version)]
+    #[error("got unsupported version number {version}")]
     UnsupportedVersion {
         version: usize,
     },
@@ -113,7 +114,7 @@ pub fn update_nodes(
     config: &config::Config,
     renderer: config::Renderer,
     email_sender: EmailSender,
-) -> Result<(), Error> {
+) -> Result<()> {
     let cur_nodes = reqwest::get(config.urls.nodes.clone())?;
     let cur_nodes: json::Nodes = serde_json::from_reader(cur_nodes)?;
 
@@ -130,7 +131,7 @@ pub fn update_nodes(
     }
 
     // Compute which nodes changed their state, also update node names in DB
-    let changed : Vec<(String, NodeData)> = db.transaction::<_, Error, _>(|| {
+    let changed : Vec<(String, NodeData)> = db.transaction::<_, anyhow::Error, _>(|| {
         let mut changed = Vec::new();
 
         // Go over every node in the database

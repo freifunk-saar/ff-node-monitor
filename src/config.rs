@@ -25,7 +25,7 @@ use url_serde;
 use serde::{Deserialize, Serialize, de::IntoDeserializer};
 use serde_json::{self, json};
 use ring::hmac;
-use failure::{Error, bail};
+use anyhow::{Result, bail};
 use mail::{Email, HeaderTryFrom, default_impl::simple_context};
 use uuid::Uuid;
 
@@ -119,7 +119,7 @@ impl<'a> Renderer<'a> {
         &self,
         name: impl Into<Cow<'static, str>>,
         mut context: serde_json::Value
-    ) -> Result<Template, Error> {
+    ) -> Result<Template> {
         if let Some(obj) = context.as_object_mut() {
             let old = obj.insert("config".to_string(), json!({
                 "ui": self.0.ui,

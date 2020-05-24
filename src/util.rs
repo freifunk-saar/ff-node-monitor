@@ -25,7 +25,8 @@ use rocket::{
 };
 use rocket_contrib::templates::Template;
 
-use failure::{Fail, Error, bail};
+use anyhow::{Result, bail};
+use thiserror::Error;
 use mail::{Mail, Email, smtp, headers, HeaderTryFrom, default_impl::simple_context};
 use serde::{Serialize, Deserialize};
 use futures::Future;
@@ -53,7 +54,7 @@ pub mod hex_signing_key {
 pub struct EmailAddress(String);
 
 impl EmailAddress {
-    pub fn new(s: String) -> Result<EmailAddress, Error> {
+    pub fn new(s: String) -> Result<EmailAddress> {
         let email_parts : Vec<&str> = s.split('@').collect();
         if email_parts.len() != 2 {
             bail!("Too many or two few @");
@@ -69,9 +70,9 @@ impl EmailAddress {
 }
 
 impl<'v> FromFormValue<'v> for EmailAddress {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn from_form_value(v: &'v RawStr) -> Result<EmailAddress, Error> {
+    fn from_form_value(v: &'v RawStr) -> Result<EmailAddress> {
         let s = v.url_decode()?;
         EmailAddress::new(s)
     }
@@ -92,14 +93,22 @@ pub struct EmailSender<'a, 'r> {
     mail_ctx: &'a simple_context::Context,
 }
 
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 enum ResponderError {
-    #[fail(display = "responder failed with status {}", status)]
+    #[error("responder failed with status {status}")]
     RenderFailure {
         status: Status,
     },
-    #[fail(display = "couldn't find a body")]
+    #[error("couldn't find a body")]
     NoBody,
+}
+
+#[derive(Debug, Error)]
+enum EmailError {
+    #[error("{0}")]
+    ComponentCreation(mail::error::ComponentCreationError),
+    #[error("{0}")]
+    MailSend(mail::error::MailSendError),
 }
 
 impl<'a, 'r> FromRequest<'a, 'r> for EmailSender<'a, 'r> {
@@ -112,27 +121,28 @@ impl<'a, 'r> FromRequest<'a, 'r> for EmailSender<'a, 'r> {
 }
 
 impl<'a, 'r> EmailSender<'a, 'r> {
-    fn responder_body<'re>(&self, responder: impl Responder<'re>) -> Result<String, Error> {
+    fn responder_body<'re>(&self, responder: impl Responder<'re>) -> Result<String> {
         let mut resp = responder.respond_to(self.request)
             .map_err(|status| ResponderError::RenderFailure { status })?;
         Ok(resp.body_string().ok_or(ResponderError::NoBody)?)
     }
 
     /// Build an email from a template and send it
-    pub fn email(&self, email_template: Template, to: &str) -> Result<(), Error> {
+    pub fn email(&self, email_template: Template, to: &str) -> Result<()> {
         let email_text = self.responder_body(email_template)?;
         let email_parts : Vec<&str> = email_text.splitn(4, '\n').collect();
         let (empty, email_from, email_subject, email_body) = (email_parts[0], email_parts[1], email_parts[2], email_parts[3]);
         assert!(empty.is_empty(), "The first line of the email template must be empty");
 
         // Build email
-        let from = Email::try_from(self.config.ui.email_from.as_str())?;
+        let from = Email::try_from(self.config.ui.email_from.as_str())
+            .map_err(EmailError::ComponentCreation)?;
         let mut mail = Mail::plain_text(email_body, self.mail_ctx);
         mail.insert_headers(headers! {
             headers::_From: [(email_from, from)],
             headers::_To: [to],
             headers::Subject: email_subject
-        }?);
+        }.map_err(EmailError::ComponentCreation)?);
 
         // Send email
         let config = if self.config.secrets.get_smtp_host() == "localhost" {
@@ -141,6 +151,6 @@ impl<'a, 'r> EmailSender<'a, 'r> {
             let smtp_host = self.config.secrets.get_smtp_host();
             smtp::ConnectionConfig::builder_with_port(smtp_host.parse()?, 25)?.build()
         };
-        Ok(smtp::send(mail.into(), config, self.mail_ctx.clone()).wait()?)
+        Ok(smtp::send(mail.into(), config, self.mail_ctx.clone()).wait().map_err(EmailError::MailSend)?)
     }
 }
