@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # bootstrap script to install ff-node-monitor
-
 set -xe
+
+# in case vagrant fails to install, try run this script starting from line 25
+
 export DEBIAN_FRONTEND=noninteractive
 
 if [ "$0" == "/tmp/vagrant-shell" ]; then

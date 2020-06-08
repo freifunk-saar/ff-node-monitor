@@ -258,4 +258,12 @@ To test it run
 echo -e "Subject: msmtp test\nhello test." | msmtp _recipient_address_
 ```
 
-You should find your sent e-mail in the recipient's inbox shortly afterwards. 
+You should find your sent e-mail in the recipient's inbox shortly afterwards.
+
+### vagrant troubleshooting
+
+In case the install in the mashine fails, consider to upgrade your vagrant box with
+
+```
+vagrant box update
+```
