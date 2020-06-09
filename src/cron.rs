@@ -130,6 +130,15 @@ pub fn update_nodes(
         }
     }
 
+    // stop here if nearly all nodes are offline
+    let online_nodes = cur_nodes_map.values().filter(|data| data.online).count();
+    if online_nodes < config.ui.min_online_nodes_on_map && config.ui.min_online_nodes_on_map > 0 {
+        // TODO: translate that into returning an appropriate response to the HTTP request:
+        //       "Only {online_nodes} nodes are online - the map seems to be showing all nodes offline"
+        //       so the cronjob will print this and send a notification email to the admin
+        return Ok(());
+    }
+    
     // Compute which nodes changed their state, also update node names in DB
     let changed : Vec<(String, NodeData)> = db.transaction::<_, anyhow::Error, _>(|| {
         let mut changed = Vec::new();
@@ -176,7 +185,7 @@ pub fn update_nodes(
                 })
                 .execute(db)?;
             if cur_data.online {
-                // The node online, so it appearing is a change from the implicit offline
+                // The node is online, so it appearing is a change from the implicit offline
                 // it was in when it did not exist.
                 changed.push((id, cur_data));
             }

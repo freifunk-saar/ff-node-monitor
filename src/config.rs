@@ -38,6 +38,7 @@ pub struct Ui {
     pub instance_name: String,
     pub instance_article_dative: String,
     pub email_from: String,
+    pub min_online_nodes_on_map: usize,
 }
 
 #[derive(Serialize, Deserialize)]
