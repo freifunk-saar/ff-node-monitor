@@ -43,6 +43,7 @@ use rocket_contrib::{
 struct DbConn(diesel::PgConnection);
 
 fn main() {
+    pretty_env_logger::init();
     // Launch the rocket
     rocket::ignite()
         .attach(DbConn::fairing())
