@@ -29,4 +29,3 @@ chrono = { version = "0.4.2", features = ["serde"] }
 mail = { version = "0.6.7", features = ["smtp"] }
 futures = "0.1"
 uuid = "0.7.3"
-pretty_env_logger = "0.4.0"

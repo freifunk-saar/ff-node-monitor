@@ -38,19 +38,12 @@ use rocket_contrib::{
     serve::StaticFiles,
 };
 
-use std::env;
-
 // DB connection guard type
 #[database("postgres")]
 struct DbConn(diesel::PgConnection);
 
 fn main() {
-    // Initialize logging
-    if env::var_os("RUST_LOG").is_none() {
-        env::set_var("RUST_LOG", "info");
-    }
-    pretty_env_logger::init();
-    // Launch the rocket
+    // Launch the rocket (also initializes `log` facade)
     rocket::ignite()
         .attach(DbConn::fairing())
         .attach(rocket::fairing::AdHoc::on_attach("Run DB migrations", |rocket| {
