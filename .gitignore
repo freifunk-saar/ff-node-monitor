@@ -4,3 +4,4 @@
 /target
 **/*.rs.bk
 Rocket.toml
+/vagrant/*.log
