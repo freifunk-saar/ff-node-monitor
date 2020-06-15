@@ -474,7 +474,7 @@ dependencies = [
  "diesel_migrations 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.29 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "mail 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mail 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "ring 0.13.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rmp-serde 0.13.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -901,13 +901,13 @@ dependencies = [
 
 [[package]]
 name = "mail"
-version = "0.6.12"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "mail-core 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "mail-headers 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "mail-internals 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "mail-smtp 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mail-smtp 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mail-template 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -970,7 +970,7 @@ dependencies = [
 
 [[package]]
 name = "mail-smtp"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "failure 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -978,7 +978,7 @@ dependencies = [
  "mail-core 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "mail-headers 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "mail-internals 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "new-tokio-smtp 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "new-tokio-smtp 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1188,7 +1188,7 @@ dependencies = [
 
 [[package]]
 name = "new-tokio-smtp"
-version = "0.8.2"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "base64 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2697,11 +2697,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)" = "e19e8d5c34a3e0e2223db8e060f9e8264aeeb5c5fc64a4ee9965c062211c024b"
 "checksum log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)" = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
 "checksum lut 0.1.0-unstable (registry+https://github.com/rust-lang/crates.io-index)" = "a04dbc086dbfbcb928e7a583f4f9fea096f9e4180c1764e86c28808759d3501c"
-"checksum mail 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)" = "0a3a3b31f72c6e0c2815c164d30a5c18d8676bfa6ee855824c5e114f7a93c951"
+"checksum mail 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "12f0a7ac423c5c2f48bdd47f87d22f3a2576e95a935955e9b93f02b7d58a87f2"
 "checksum mail-core 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "4aead5063c59e129f0828b70b8eafdb22872b60be4b3c97ed10a6518202eccec"
 "checksum mail-headers 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)" = "f6263724ef783be06ee3bfe2c7cb2eb42add71366b8e0355bc5b0d8cd66a39df"
 "checksum mail-internals 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "01e42ec17bb7a239a58f0a58c9c4fc2f78443e6a0f023234c2284cea86156f54"
-"checksum mail-smtp 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "69353fa8415d4d659c76ed5f8b0956131217a5411c95bcc608375c2c2404e3bb"
+"checksum mail-smtp 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d25c930c23d23aabc2261448f3c7e5ca30a0b4b77b86b433150c7a850239ab71"
 "checksum mail-template 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f83d995a5dbb547094129b7cea7bee78888d533f72651d76f38200101706b57e"
 "checksum maplit 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 "checksum matches 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
@@ -2724,7 +2724,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum miow 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8c1f2f3b1cf331de6896aabf6e9d55dca90356cc9960cca7eaaf408a355ae919"
 "checksum native-tls 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "2b0d88c06fe90d5ee94048ba40409ef1d9315d86f6f38c2efdaad4fb50c58b2d"
 "checksum net2 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)" = "2ba7c918ac76704fb42afcbbb43891e72731f3dcca3bef2a19786297baf14af7"
-"checksum new-tokio-smtp 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)" = "11329f5426f261971aca21f3a1502e22957938541c4707abd8aa47b360a51e85"
+"checksum new-tokio-smtp 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7a86f39d75cba90734ac294a39b36cd6b3eac6fe906b79036a55002cb34e2ffb"
 "checksum nom 3.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "05aec50c70fd288702bcd93284a8444607f3292dbdf2a30de5ea5dcdbe72287b"
 "checksum notify 4.0.15 (registry+https://github.com/rust-lang/crates.io-index)" = "80ae4a7688d1fab81c5bf19c64fc8db920be8d519ce6336ed4e7efe024724dbd"
 "checksum num-integer 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)" = "8d59457e662d541ba17869cf51cf177c0b5f0cbf476c66bdc90bf1edac4f875b"

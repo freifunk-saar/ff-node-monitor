@@ -26,6 +26,6 @@ base64 = "0.10"
 hex = "0.3.2"
 reqwest = "0.9"
 chrono = { version = "0.4.2", features = ["serde"] }
-mail = { version = "0.6.7", features = ["smtp"] }
+mail = { version = "0.7", features = ["smtp"] }
 futures = "0.1"
 uuid = "0.7.3"
