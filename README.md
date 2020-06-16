@@ -22,7 +22,6 @@ Make sure you have at least 1.5 GB free disk space.
 
     ```
     sudo adduser ff-node-monitor --home /opt/ff-node-monitor --system
-    cd /opt/ff-node-monitor
     ```
 
 2.  We need some development libraries for the build process:
@@ -31,31 +30,36 @@ Make sure you have at least 1.5 GB free disk space.
     sudo apt install libssl-dev libpq-dev libc6-dev curl gcc pkg-config
     ```
 
-3.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
+3.  Fetch the sources:
+    
+    ```
+    sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git /opt/ff-node-monitor/src
+    ```
+
+4.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
     [Rocket](https://rocket.rs/), which means it needs a nightly version of Rust:
 
     ```
+    cd /opt/ff-node-monitor
     curl https://sh.rustup.rs -sSf > rustup.sh
-    sudo -u ff-node-monitor sh rustup.sh --default-toolchain $(cat rust-version)
+    sudo -u ff-node-monitor sh rustup.sh --default-toolchain $(cat src/rust-version)
     rm rustup.sh
     ```
 
     The file `rust-version` always contains a tested nightly version number. If
     you want the latest nightly version instead, just use `--default-toolchain nightly` .
 
-4.  Now we can fetch the sources and build them:
+5.  Build node-monitor:
 
     ```
-    sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git src
-    cd src
     sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
     > The build process takes a while, you can already finish the Database Setup
-    > (steps 6. and 7.) and part of the Service Setup (step 8. and 10.) in a
+    > (steps 7. and 8.) and part of the Service Setup (step 9. and 11.) in a
     > second shell as the build process continues.
 
-5.  This step is optional, but if you want to save some disk space, you can now
+6.  This step is optional, but if you want to save some disk space, you can now
     clean up the build directory:
 
     ```
@@ -74,13 +78,13 @@ Make sure you have at least 1.5 GB free disk space.
 
 ### Database setup
 
-6.  *ff-node-monitor* needs PostgreSQL as a database backend:
+7.  *ff-node-monitor* needs PostgreSQL as a database backend:
 
     ```
     sudo apt install postgresql
     ```
 
-7.  We will use the `ff-node-monitor` system user to access PostgreSQL, and we
+8.  We will use the `ff-node-monitor` system user to access PostgreSQL, and we
     need to create a database for the service:
 
     ```
@@ -93,7 +97,7 @@ Make sure you have at least 1.5 GB free disk space.
 
 ### Service setup
 
-8.  The service loads its configuration from a `Rocket.toml` file in the source
+9.  The service loads its configuration from a `Rocket.toml` file in the source
     directory.  You can start by copying the template:
 
     ```
@@ -105,7 +109,7 @@ Make sure you have at least 1.5 GB free disk space.
     Most of the values in your `Rocket.toml` will need to be changed; see the comments in the
     template for what to do and how.
 
-9.  To run the service using systemd, the `.service` file needs to be installed:
+10. To run the service using systemd, the `.service` file needs to be installed:
 
     ```
     sudo cp ff-node-monitor.service /etc/systemd/system/
@@ -118,7 +122,7 @@ Make sure you have at least 1.5 GB free disk space.
     If the last command does not show the service as running, you need to debug
     and fix whatever issue has come up.
 
-10. To expose the service on the internet, set up a reverse proxy in your main
+11. To expose the service on the internet, set up a reverse proxy in your main
     web server. If you are not already running a web server, `nginx` is a good
     choice.  You will have to edit your site configuration, usually located at
     `/etc/nginx/sites-enabled/default`.  Here's the necessary snippet, mounting
@@ -144,7 +148,7 @@ Make sure you have at least 1.5 GB free disk space.
     Now, accessing the service at whatever `root` URL you configured in the
     `Rocket.toml` should work.
 
-11. Finally, the service relies on a cron job to regularly check in on all the
+12. Finally, the service relies on a cron job to regularly check in on all the
     nodes and send notifications when their status changed:
 
     ```
