@@ -22,6 +22,7 @@ use crate::schema::*;
 pub struct MonitorQuery {
     pub id: String,
     pub email: String,
+    pub initial_name: String,
 }
 
 #[derive(Insertable, Identifiable)]
@@ -29,6 +30,7 @@ pub struct MonitorQuery {
 pub struct Monitor<'a> {
     pub id: &'a str,
     pub email: &'a str,
+    pub initial_name: &'a str,
 }
 
 #[derive(Queryable, Serialize)]
