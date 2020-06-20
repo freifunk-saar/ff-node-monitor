@@ -72,9 +72,9 @@ instance_name = "$INSTANCE_NAME"
 instance_article_dative = "der"
 # The sender address of the emails that are sent by ff-node-monitor.
 email_from = "$EMAIL_FROM"
-# When fewer nodes than this are online in the nodes.json file, the database won't be updated
-# and there will be no warning mails sent. A value of 0 disables this sanity check.
-min_online_nodes_on_map = 0
+# Optional: When fewer nodes than this are online in the nodes.json file, the database won't be updated
+# and there will be no warning mails sent.
+#min_online_nodes = 1
 
 [global.ff-node-monitor.urls]
 # The root URL where you will be hosting ff-node-monitor (with trailing slash)

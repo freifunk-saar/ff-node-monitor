@@ -108,13 +108,19 @@ impl NodeData {
     }
 }
 
+#[must_use]
+pub enum UpdateResult {
+    AllOk,
+    NotEnoughOnline(usize),
+}
+
 /// Fetch the latest nodelist, update node state and send out emails
 pub fn update_nodes(
     db: &PgConnection,
     config: &config::Config,
-    renderer: config::Renderer,
+    renderer: &config::Renderer,
     email_sender: EmailSender,
-) -> Result<()> {
+) -> Result<UpdateResult> {
     let cur_nodes = reqwest::get(config.urls.nodes.clone())?;
     let cur_nodes: json::Nodes = serde_json::from_reader(cur_nodes)?;
 
@@ -130,13 +136,10 @@ pub fn update_nodes(
         }
     }
 
-    // stop here if nearly all nodes are offline
+    // Stop here if nearly all nodes are offline
     let online_nodes = cur_nodes_map.values().filter(|data| data.online).count();
-    if online_nodes < config.ui.min_online_nodes_on_map && config.ui.min_online_nodes_on_map > 0 {
-        // TODO: translate that into returning an appropriate response to the HTTP request:
-        //       "Only {online_nodes} nodes are online - the map seems to be showing all nodes offline"
-        //       so the cronjob will print this and send a notification email to the admin
-        return Ok(());
+    if online_nodes < config.ui.min_online_nodes.unwrap_or(0) {
+        return Ok(UpdateResult::NotEnoughOnline(online_nodes));
     }
     
     // Compute which nodes changed their state, also update node names in DB
@@ -218,5 +221,5 @@ pub fn update_nodes(
         }
     }
 
-    Ok(())
+    Ok(UpdateResult::AllOk)
 }
