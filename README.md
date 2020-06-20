@@ -30,29 +30,30 @@ Make sure you have at least 1.5 GB free disk space.
     sudo apt install libssl-dev libpq-dev libc6-dev curl gcc pkg-config
     ```
 
-3.  Fetch the sources:
-    
+3.  Fetch the *ff-node-monitor* sources:
+
     ```
-    sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git /opt/ff-node-monitor/src
+    sudo -u ff-node-monitor git clone https://github.com/freifunk-saar/ff-node-monitor.git ~ff-node-monitor/src
+    cd ~ff-node-monitor/src
     ```
 
 4.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
     [Rocket](https://rocket.rs/), which means it needs a nightly version of Rust:
 
     ```
-    cd /opt/ff-node-monitor
     curl https://sh.rustup.rs -sSf > rustup.sh
-    sudo -u ff-node-monitor sh rustup.sh --default-toolchain $(cat src/rust-version)
+    sudo -u ff-node-monitor sh rustup.sh --default-toolchain $(cat rust-version)
     rm rustup.sh
     ```
 
     The file `rust-version` always contains a tested nightly version number. If
-    you want the latest nightly version instead, just use `--default-toolchain nightly` .
+    you want the latest nightly version instead, just use `--default-toolchain
+    nightly`. However, the build might fail then.
 
-5.  Build node-monitor:
+5.  Build *ff-node-monitor*:
 
     ```
-    sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
+    sudo -u ff-node-monitor ~ff-node-monitor/.cargo/bin/cargo build --release
     ```
 
     > The build process takes a while, you can already finish the Database Setup
@@ -101,7 +102,7 @@ Make sure you have at least 1.5 GB free disk space.
     directory.  You can start by copying the template:
 
     ```
-    cd /opt/ff-node-monitor/src
+    cd ~ff-node-monitor/src
     sudo -u ff-node-monitor cp Rocket.toml.dist Rocket.toml
     chmod 600 Rocket.toml
     ```
@@ -169,11 +170,11 @@ That's it!  The service should now be running and working.
 To upgrade the service to the latest git version, follow these steps:
 
 ```
-cd /opt/ff-node-monitor/src/
+cd ~ff-node-monitor/src/
 git pull
 sudo rm target/release/ff-node-monitor
-sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
-sudo -u ff-node-monitor /opt/ff-node-monitor/.cargo/bin/cargo build --release
+sudo -u ff-node-monitor ~ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
+sudo -u ff-node-monitor ~ff-node-monitor/.cargo/bin/cargo build --release
 sudo systemctl restart ff-node-monitor
 ```
 
