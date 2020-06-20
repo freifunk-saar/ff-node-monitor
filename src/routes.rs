@@ -171,9 +171,14 @@ fn cron(
     config: State<Config>,
     renderer: Renderer,
     email_sender: EmailSender,
-) -> Result<()> {
-    cron::update_nodes(&*db, &*config, renderer, email_sender)?;
-    Ok(())
+) -> Result<Template> {
+    match cron::update_nodes(&*db, &*config, &renderer, email_sender)? {
+        cron::UpdateResult::NotEnoughOnline(online) =>
+            renderer.render("cron_error", json!({
+                "not_enough_online": online,
+            })),
+        cron::UpdateResult::AllOk => renderer.render("cron", json!({})),
+    }
 }
 
 pub fn routes() -> Vec<::rocket::Route> {

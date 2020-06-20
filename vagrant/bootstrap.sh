@@ -65,40 +65,44 @@ $ffsudo touch Rocket.toml
 $ffsudo chmod 777 Rocket.toml
 cat <<EOF > Rocket.toml
 [global.ff-node-monitor.ui]
-# The name of your Freifunk community.
+# The name and grammatical article of this instance.
 instance_name = "$INSTANCE_NAME"
 # The sentence "Willkommen bei $instance_article_dative $instance_name" should be grammatically
 # correct.
 instance_article_dative = "der"
-# The sender address of the emails that are sent by ff-node-monitor:
+# The sender address of the emails that are sent by ff-node-monitor.
 email_from = "$EMAIL_FROM"
+# Optional: When fewer nodes than this are online in the nodes.json file, the database won't be updated
+# and there will be no warning mails sent.
+#min_online_nodes = 1
 
 [global.ff-node-monitor.urls]
-# The root URL where you will be hosting ff-node-monitor.
+# The root URL where you will be hosting ff-node-monitor (with trailing slash)
 root = "$ROOT_URL"
 # The URL to the hopglass nodes.json file.
 nodes = "$NODES_URL"
 # URL to the source code (needed for AGPL compliance).  You can leave this unchanged if you didn't
 # change the code.  Otherwise, you have to upload the changed code somewhere and point to it here.
 sources = "https://github.com/freifunk-saar/ff-node-monitor"
-# Optional: Absolute URL to another sytelsheet that is included in the page.
+# Optional: Absolute URL to another stylesheet that is included in the page.
 #stylesheet = "https://..."
 
 [global.ff-node-monitor.secrets]
-# Key used to sign data for confirmation emails:
+# Key used to sign data for confirmation emails.  Generate this key with
+# `openssl rand -hex 32`.
 action_signing_key = "$(openssl rand -hex 32)"
 # Optional: Host to submit emails to.  That host must accept email with arbitrary destination
-# from this service.
+# from this service.  Unless this is "localhost", the connection will be encrypted via STARTTLS.
 smtp_host = "localhost"
 
 [global.databases]
 postgres = { url = "postgres://$FFNM_USERNAME@/$FFNM_USERNAME" }
 
 [global]
-# The address and port on which ff-node-monitor will listen.
+# The address on which ff-node-monitor will listen.  Use "0.0.0.0" to listen on all interfaces.
 address = "0.0.0.0"
 port = $PORT
-# Secret key used by Rocket:
+# Secret key used by Rocket.  Generate this key with `openssl rand -base64 32`.
 secret_key = "$(openssl rand -base64 32)"
 EOF
 $ffsudo chmod 600 Rocket.toml
