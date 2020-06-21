@@ -73,8 +73,9 @@ instance_article_dative = "der"
 # The sender address of the emails that are sent by ff-node-monitor.
 email_from = "$EMAIL_FROM"
 # Optional: When fewer nodes than this are online in the nodes.json file, the database won't be updated
-# and there will be no warning mails sent.
-#min_online_nodes = 1
+# and there will be no warning mails sent. If set, this should be at least higher than the number of
+# gateways in the network
+#min_online_nodes = 10
 
 [global.ff-node-monitor.urls]
 # The root URL where you will be hosting ff-node-monitor (with trailing slash)
