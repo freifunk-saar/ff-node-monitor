@@ -10,6 +10,12 @@ notifications:
   email:
     on_success: never
 
+branches:
+  only:
+    - staging
+    - trying
+    - master
+
 before_script:
 # Compute the rust version we use. We do not use "language: rust" to have more control here.
 - |
