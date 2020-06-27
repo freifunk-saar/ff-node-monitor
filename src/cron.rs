@@ -60,7 +60,6 @@ mod json {
         crate memory_usage: Option<f64>,
         crate rootfs_usage: Option<f64>,
         crate loadavg: Option<f64>,
-        crate clients: Option<usize>,
     }
 
     #[derive(Deserialize, Debug)]
