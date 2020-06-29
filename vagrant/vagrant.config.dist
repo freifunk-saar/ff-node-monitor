@@ -7,4 +7,4 @@ INSTANCE_NAME="Freifunk Alpha Centauri"
 EMAIL_FROM="freifunk@alpha-centauri.mw"
 
 # The URL to the hopglass nodes.json file.
-NODES_URL="https://map.freifunk.in-kiel.de/yanic/nodes.json"
+NODES_URL="https://map.freifunk.in-kiel.de/nodes.json"

@@ -24,8 +24,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     t.vm.network :forwarded_port, guest: 8833, host: 8833
   end
   
-  # disable automatic update check:
-  config.vm.box_check_update = false
+  # enable automatic update check:
+  config.vm.box_check_update = true
   
   # make sure that guest additions is already installed with:
   # vagrant plugin install vagrant-vbguest
