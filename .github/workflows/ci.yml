@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'staging'
+      - 'trying'
+      - 'master'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install 'ts'
+        run: sudo apt-get -y install moreutils
+
+      - name: Install correct toolchain
+        shell: bash
+        run: |
+          if [[ ${{ github.event_name }} == 'schedule' ]]; then
+            RUST_TOOLCHAIN=nightly
+          else
+            RUST_TOOLCHAIN=$(cat rust-version)
+          fi
+          echo "Installing Rust version: $RUST_TOOLCHAIN"
+          rustup default $RUST_TOOLCHAIN
+
+      - name: Show Rust version
+        run: |
+          rustup show
+          rustc -Vv
+          cargo -V
+
+      - name: Build
+        run: RUSTFLAGS="-D warnings" cargo build --locked
