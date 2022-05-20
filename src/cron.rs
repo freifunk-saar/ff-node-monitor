@@ -56,6 +56,7 @@ mod json {
     }
 
     #[derive(Deserialize, Debug)]
+    #[allow(unused)] // we don't actually need all these fields
     crate struct Statistics {
         crate memory_usage: Option<f64>,
         crate rootfs_usage: Option<f64>,
@@ -63,6 +64,7 @@ mod json {
     }
 
     #[derive(Deserialize, Debug)]
+    #[allow(unused)] // we don't actually need all these fields
     crate struct Node {
         crate nodeinfo: NodeInfo,
         crate flags: Flags,
@@ -72,6 +74,7 @@ mod json {
     }
 
     #[derive(Deserialize, Debug)]
+    #[allow(unused)] // we don't actually need all these fields
     crate struct Nodes {
         crate version: usize,
         crate nodes: Vec<Node>,
