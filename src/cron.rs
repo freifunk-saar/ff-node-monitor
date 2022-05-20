@@ -123,7 +123,7 @@ pub fn update_nodes(
     renderer: &config::Renderer,
     email_sender: EmailSender,
 ) -> Result<UpdateResult> {
-    let cur_nodes = reqwest::get(config.urls.nodes.clone())?;
+    let cur_nodes = reqwest::blocking::get(config.urls.nodes.clone())?;
     let cur_nodes: json::Nodes = serde_json::from_reader(cur_nodes)?;
 
     if cur_nodes.version != 2 {

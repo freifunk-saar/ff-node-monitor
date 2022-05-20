@@ -21,7 +21,6 @@ use rocket_contrib::templates::Template;
 
 use toml;
 use url::Url;
-use url_serde;
 use serde::{Deserialize, Serialize, de::IntoDeserializer};
 use serde_json::{self, json};
 use ring::hmac;
@@ -43,11 +42,8 @@ pub struct Ui {
 
 #[derive(Serialize, Deserialize)]
 pub struct Urls {
-    #[serde(with = "url_serde")]
     pub root: Url,
-    #[serde(with = "url_serde")]
     pub nodes: Url,
-    #[serde(with = "url_serde")]
     pub sources: Url,
     pub stylesheet: Option<String>,
 }
