@@ -45,40 +45,40 @@ mod json {
     use serde::Deserialize;
 
     #[derive(Deserialize, Debug)]
-    crate struct NodeInfo {
-        crate node_id: Option<String>,
-        crate hostname: Option<String>,
+    pub(crate) struct NodeInfo {
+        pub(crate) node_id: Option<String>,
+        pub(crate) hostname: Option<String>,
     }
 
     #[derive(Deserialize, Debug)]
-    crate struct Flags {
-        crate online: bool,
-    }
-
-    #[derive(Deserialize, Debug)]
-    #[allow(unused)] // we don't actually need all these fields
-    crate struct Statistics {
-        crate memory_usage: Option<f64>,
-        crate rootfs_usage: Option<f64>,
-        crate loadavg: Option<f64>,
+    pub(crate) struct Flags {
+        pub(crate) online: bool,
     }
 
     #[derive(Deserialize, Debug)]
     #[allow(unused)] // we don't actually need all these fields
-    crate struct Node {
-        crate nodeinfo: NodeInfo,
-        crate flags: Flags,
-        crate statistics: Statistics,
-        crate lastseen: DateTime<Utc>,
-        crate firstseen: DateTime<Utc>,
+    pub(crate) struct Statistics {
+        pub(crate) memory_usage: Option<f64>,
+        pub(crate) rootfs_usage: Option<f64>,
+        pub(crate) loadavg: Option<f64>,
     }
 
     #[derive(Deserialize, Debug)]
     #[allow(unused)] // we don't actually need all these fields
-    crate struct Nodes {
-        crate version: usize,
-        crate nodes: Vec<Node>,
-        crate timestamp: DateTime<Utc>,
+    pub(crate) struct Node {
+        pub(crate) nodeinfo: NodeInfo,
+        pub(crate) flags: Flags,
+        pub(crate) statistics: Statistics,
+        pub(crate) lastseen: DateTime<Utc>,
+        pub(crate) firstseen: DateTime<Utc>,
+    }
+
+    #[derive(Deserialize, Debug)]
+    #[allow(unused)] // we don't actually need all these fields
+    pub(crate) struct Nodes {
+        pub(crate) version: usize,
+        pub(crate) nodes: Vec<Node>,
+        pub(crate) timestamp: DateTime<Utc>,
     }
 }
 

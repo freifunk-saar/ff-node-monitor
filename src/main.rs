@@ -14,7 +14,7 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#![feature(proc_macro_hygiene, decl_macro, crate_visibility_modifier, try_blocks)]
+#![feature(proc_macro_hygiene, decl_macro, try_blocks)]
 
 // FIXME: Diesel macros generate warnings
 #![allow(proc_macro_derive_resolution_fallback)]
