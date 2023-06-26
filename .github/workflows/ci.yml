@@ -1,15 +1,10 @@
 name: CI
 
 on:
-  push:
-    branches:
-    - 'master'
   pull_request:
-    branches:
-    - 'master'
   merge_group:
   schedule:
-    - cron: '2 42 * * SAT' # At 2:42 UTC every Saturday.
+    - cron: '42 2 * * SAT' # At 2:42 UTC every Saturday.
 
 jobs:
   build:
