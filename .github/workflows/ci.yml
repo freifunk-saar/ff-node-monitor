@@ -8,6 +8,8 @@ on:
     branches:
     - 'master'
   merge_group:
+  schedule:
+    - cron: '2 42 * * SAT' # At 2:42 UTC every Saturday.
 
 jobs:
   build:
