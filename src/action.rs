@@ -14,31 +14,31 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::request::FromFormValue;
-use rocket::http::RawStr;
+use rocket::form::FromFormField;
 use rocket::FromForm;
 
-use diesel::prelude::*;
 use diesel;
 use diesel::result::{Error as DieselError, DatabaseErrorKind};
+use diesel_async::{AsyncConnection,AsyncPgConnection, RunQueryDsl};
 use ring::{hmac, error};
 use anyhow::{Result, bail};
 use rmp_serde::to_vec as serialize_to_vec;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
+use scoped_futures::ScopedFutureExt;
 
 use crate::schema::*;
 use crate::models::*;
 use crate::util::EmailAddress;
 
-#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone, FromFormField)]
 #[repr(u8)]
 pub enum Operation {
     Add = 1,
     Remove = 0,
 }
 
-impl<'v> FromFormValue<'v> for Operation {
+/*impl<'v> FromFormValue<'v> for Operation {
     type Error = &'v RawStr;
 
     fn from_form_value(v: &'v RawStr) -> Result<Self, Self::Error> {
@@ -48,7 +48,7 @@ impl<'v> FromFormValue<'v> for Operation {
             _ => Err(v),
         }
     }
-}
+}*/
 
 #[derive(Serialize, Deserialize, FromForm, Clone)]
 pub struct Action {
@@ -84,15 +84,15 @@ impl Action {
         SignedAction { action: self, signature }
     }
 
-    pub fn run(&self, db: &PgConnection) -> Result<bool> {
+    pub async fn run(&self, db: &mut AsyncPgConnection) -> Result<bool> {
         let m = Monitor { id: self.node.as_str(), email: self.email.as_str() };
-        db.transaction::<_, anyhow::Error, _>(|| {
+        db.transaction::<_, anyhow::Error, _>(|db| async move {
             Ok(match self.op {
                 Operation::Add => {
                     // Add node.  We are fine if it does not exist.
                     let r = diesel::insert_into(monitors::table)
                         .values(&m)
-                        .execute(db);
+                        .execute(db).await;
                     // Handle UniqueViolation gracefully
                     match r {
                         Ok(_) => true,
@@ -101,11 +101,11 @@ impl Action {
                     }
                 }
                 Operation::Remove => {
-                    let num_deleted = diesel::delete(&m).execute(db)?;
+                    let num_deleted = diesel::delete(&m).execute(db).await?;
                     num_deleted > 0
                 }
             })
-        })
+        }.scope_boxed()).await
     }
 }
 

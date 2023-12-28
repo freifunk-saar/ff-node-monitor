@@ -14,18 +14,17 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::{self, State, Outcome, http::uri};
-use rocket::request::{self, Request, FromRequest};
-use rocket::fairing::{Fairing, AdHoc};
-use rocket_contrib::templates::Template;
+use rocket::fairing::{AdHoc, Fairing};
+use rocket::request::{self, FromRequest, Request};
+use rocket::{self, http::uri, request::Outcome, State};
+use rocket_dyn_templates::Template;
 
-use toml;
-use url::Url;
-use serde::{Deserialize, Serialize, de::IntoDeserializer};
-use serde_json::{self, json};
+use anyhow::{bail, Result};
+use mail::{default_impl::simple_context, Email, HeaderTryFrom};
 use ring::hmac;
-use anyhow::{Result, bail};
-use mail::{Email, HeaderTryFrom, default_impl::simple_context};
+use serde::{Deserialize, Serialize};
+use serde_json::{self, json};
+use url::Url;
 use uuid::Uuid;
 
 use std::borrow::Cow;
@@ -64,7 +63,10 @@ pub struct Secrets {
 impl Secrets {
     /// Getters for default values
     pub fn get_smtp_host(&self) -> &str {
-        self.smtp_host.as_ref().map(String::as_str).unwrap_or("localhost")
+        self.smtp_host
+            .as_ref()
+            .map(String::as_str)
+            .unwrap_or("localhost")
     }
 }
 
@@ -75,39 +77,30 @@ pub struct Config {
     pub urls: Urls,
 }
 
-impl Config {
-    /// Create a `Config` instance from a rocket config table
-    pub fn new(table: &rocket::config::Table) -> Self {
-        let val = toml::value::Value::Table(table.clone());
-        Self::deserialize(val.into_deserializer())
-            .expect("app config table has missing or extra value")
-    }
-}
-
 pub fn fairing(section: &'static str) -> impl Fairing {
-    AdHoc::on_attach("Parse application configuration", move |rocket| {
-        let config = {
-            let config_table = rocket.config().get_table(section)
-                .unwrap_or_else(|_| panic!("[{}] table in Rocket.toml missing or not a table", section));
-            Config::new(config_table)
-        };
+    AdHoc::on_ignite("Parse application configuration", move |rocket| async move {
+        let config: Config = rocket.figment().extract_inner(section).unwrap_or_else(|_| {
+            panic!("[{}] table in Rocket.toml missing or not a table", section)
+        });
         let mail_ctx = {
-            let from = Email::try_from(config.ui.email_from.as_str()).expect("`email_from` is not a valid email address");
+            let from = Email::try_from(config.ui.email_from.as_str())
+                .expect("`email_from` is not a valid email address");
             let unique_part = Uuid::new_v4().to_string().parse().unwrap();
             simple_context::new(from.domain, unique_part).unwrap()
         };
-        Ok(rocket.manage(config).manage(mail_ctx))
+        rocket.manage(config).manage(mail_ctx)
     })
 }
 
 /// A request guard that makes the config available to all templates
 pub struct Renderer<'a>(&'a Config);
 
-impl<'a, 'r> FromRequest<'a, 'r> for Renderer<'a> {
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for Renderer<'r> {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, ()> {
-        Outcome::Success(Renderer(request.guard::<State<Config>>()?.inner()))
+    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        Outcome::Success(Renderer(request.guard::<&State<Config>>().await.expect("config").inner()))
     }
 }
 
@@ -115,13 +108,16 @@ impl<'a> Renderer<'a> {
     pub fn render(
         &self,
         name: impl Into<Cow<'static, str>>,
-        mut context: serde_json::Value
+        mut context: serde_json::Value,
     ) -> Result<Template> {
         if let Some(obj) = context.as_object_mut() {
-            let old = obj.insert("config".to_string(), json!({
-                "ui": self.0.ui,
-                "urls": self.0.urls,
-            }));
+            let old = obj.insert(
+                "config".to_string(),
+                json!({
+                    "ui": self.0.ui,
+                    "urls": self.0.urls,
+                }),
+            );
             if old.is_some() {
                 bail!("Someone else already put a config here")
             }

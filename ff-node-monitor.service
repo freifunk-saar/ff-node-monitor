@@ -4,7 +4,6 @@ Requires=postgresql.service
 After=postgresql.service
 
 [Service]
-Environment=ROCKET_ENV=production
 WorkingDirectory=/opt/ff-node-monitor/src
 ExecStart=/opt/ff-node-monitor/src/target/release/ff-node-monitor
 User=ff-node-monitor
