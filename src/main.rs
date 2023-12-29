@@ -35,31 +35,31 @@ mod schema;
 use rocket::launch;
 
 use diesel_migrations::MigrationHarness;
-use diesel_async::{AsyncConnection, async_connection_wrapper::AsyncConnectionWrapper, RunQueryDsl, AsyncPgConnection};
-use rocket_db_pools::{diesel, Connection, Database};
 use rocket_dyn_templates::Template;
+use rocket_sync_db_pools::{database, diesel};
 
 // DB connection guard type
-#[derive(Database)]
-#[database("diesel_postgres")]
-struct DbPool(diesel::PgPool);
-type DbConn = Connection<DbPool>;
+#[database("postgres")]
+struct DbConn(diesel::PgConnection);
 
 #[launch]
 fn rocket() -> _ {
     // Launch the rocket (also initializes `log` facade)
     rocket::build()
-        .attach(DbPool::init())
+        .attach(DbConn::fairing())
         .attach(rocket::fairing::AdHoc::on_ignite(
             "Run DB migrations",
             |rocket| async {
                 let migrations =
-                    diesel_migrations::FileBasedMigrations::find_migrations_directory().expect("could not load migrations");
-                let pool = DbPool::fetch(&rocket).expect("could not connect to DB for migrations");
-                let conn = pool.get().await.unwrap();
-                let conn: &mut AsyncPgConnection = &mut *conn;
-                let mut conn = AsyncConnectionWrapper::<AsyncPgConnection>::from(conn);
-                conn.run_pending_migrations(migrations).unwrap();
+                    diesel_migrations::FileBasedMigrations::find_migrations_directory()
+                        .expect("could not load migrations");
+                let conn = DbConn::get_one(&rocket)
+                    .await
+                    .expect("could not connect to DB for migrations");
+                conn.run(move |db| {
+                    db.run_pending_migrations(migrations).unwrap();
+                })
+                .await;
                 rocket
             },
         ))

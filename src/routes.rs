@@ -20,10 +20,8 @@ use rocket_dyn_templates::Template;
 
 use base64;
 use diesel::prelude::*;
-use diesel_async::{AsyncConnection, RunQueryDsl};
 use rmp_serde::from_slice as deserialize_from_slice;
 use rmp_serde::to_vec as serialize_to_vec;
-use scoped_futures::ScopedFutureExt;
 use serde_json::json;
 
 use std::collections::HashSet;
@@ -43,45 +41,39 @@ fn index(renderer: Renderer) -> Result<Template> {
 }
 
 #[get("/list?<email>")]
-async fn list(email: EmailAddress, renderer: Renderer<'_>, mut db: DbConn) -> Result<Template> {
+async fn list(email: EmailAddress, renderer: Renderer<'_>, db: DbConn) -> Result<Template> {
     use crate::schema::*;
 
-    Ok(db
-        .transaction::<_, anyhow::Error, _>(|db| {
-            async move {
-                let watched_nodes = monitors::table
-                    .filter(monitors::email.eq(email.as_str()))
-                    .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
-                    .order_by(monitors::id)
-                    .load::<MonitorNodeQuery>(db)
-                    .await?;
-                let all_nodes = {
-                    let watched_node_ids: HashSet<&str> = watched_nodes
-                        .iter()
-                        .filter_map(|node| node.node.as_ref())
-                        .map(|node| node.id.as_str())
-                        .collect();
-                    // Diesel does not support joining to a subquery so we have to do the filtering in Rust
-                    nodes::table
-                        .order_by(nodes::name)
-                        .load::<NodeQuery>(db)
-                        .await?
-                        .into_iter()
-                        .filter(|node| !watched_node_ids.contains(&node.id.as_ref()))
-                        .collect::<Vec<NodeQuery>>()
-                };
-                renderer.render(
-                    "list",
-                    json!({
-                        "email": email,
-                        "watched_nodes": watched_nodes,
-                        "all_nodes": all_nodes,
-                    }),
-                )
-            }
-            .scope_boxed()
+    let vars = db
+        .run::<_, anyhow::Result<_>>(move |db| {
+            let watched_nodes = monitors::table
+                .filter(monitors::email.eq(email.as_str()))
+                .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
+                .order_by(monitors::id)
+                .load::<MonitorNodeQuery>(db)?;
+            let all_nodes = {
+                let watched_node_ids: HashSet<&str> = watched_nodes
+                    .iter()
+                    .filter_map(|node| node.node.as_ref())
+                    .map(|node| node.id.as_str())
+                    .collect();
+                // Diesel does not support joining to a subquery so we have to do the filtering in Rust
+                nodes::table
+                    .order_by(nodes::name)
+                    .load::<NodeQuery>(db)?
+                    .into_iter()
+                    .filter(|node| !watched_node_ids.contains(&node.id.as_ref()))
+                    .collect::<Vec<NodeQuery>>()
+            };
+            Ok(json!({
+                "email": email,
+                "watched_nodes": watched_nodes,
+                "all_nodes": all_nodes,
+            }))
         })
-        .await?)
+        .await?;
+
+    Ok(renderer.render("list", vars)?)
 }
 
 #[get("/list")]
@@ -95,7 +87,7 @@ async fn prepare_action(
     config: &State<Config>,
     renderer: Renderer<'_>,
     email_sender: EmailSender<'_>,
-    mut db: DbConn,
+    db: DbConn,
 ) -> Result<Template> {
     use crate::schema::*;
 
@@ -113,11 +105,15 @@ async fn prepare_action(
     let list_url = config.urls.absolute(uri!(list(email = &action.email)));
 
     // obtain user-readable node name
-    let node = nodes::table
-        .find(action.node.as_str())
-        .first::<NodeQuery>(&mut db)
+    let node = action.node.clone();
+    let node = db
+        .run(move |db| {
+            nodes::table
+                .find(node.as_str())
+                .first::<NodeQuery>(db)
+                .optional()
+        })
         .await
-        .optional()
         .map_err(|e| Debug(e.into()))?;
     let node_name = match node {
         Some(node) => node.name,
@@ -166,7 +162,7 @@ async fn prepare_action(
 #[get("/run_action?<signed_action>")]
 async fn run_action(
     signed_action: String,
-    mut db: DbConn,
+    db: DbConn,
     renderer: Renderer<'_>,
     config: &State<Config>,
 ) -> Result<Template> {
@@ -185,7 +181,7 @@ async fn run_action(
     };
 
     // Execute action
-    let success = action.run(&mut *db).await?;
+    let success = action.run(&db).await?;
 
     // Render
     let list_url = config.urls.absolute(uri!(list(email = &action.email)));
@@ -201,13 +197,13 @@ async fn run_action(
 
 #[get("/cron")]
 async fn cron_route(
-    mut db: DbConn,
+    db: DbConn,
     config: &State<Config>,
     renderer: Renderer<'_>,
     email_sender: EmailSender<'_>,
 ) -> Result<Template> {
     Ok(
-        match cron::update_nodes(&mut *db, &*config, email_sender).await? {
+        match cron::update_nodes(&db, &*config, email_sender).await? {
             cron::UpdateResult::NotEnoughOnline(online) => renderer.render(
                 "cron_error",
                 json!({

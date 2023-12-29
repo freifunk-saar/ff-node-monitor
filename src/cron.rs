@@ -15,12 +15,8 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use anyhow::{bail, Result};
-use diesel;
 use diesel::prelude::*;
-use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
-use reqwest;
 use rocket::uri;
-use scoped_futures::ScopedFutureExt;
 use serde_json::{self, json};
 use thiserror::Error;
 
@@ -123,12 +119,11 @@ pub enum UpdateResult {
 
 /// Fetch the latest nodelist, update node state and send out emails
 pub async fn update_nodes(
-    db: &mut AsyncPgConnection,
+    db: &crate::DbConn,
     config: &config::Config,
     email_sender: EmailSender<'_>,
 ) -> Result<UpdateResult> {
-    let cur_nodes = reqwest::blocking::get(config.urls.nodes.clone())?;
-    let cur_nodes: json::Nodes = serde_json::from_reader(cur_nodes)?;
+    let cur_nodes: json::Nodes = reqwest::get(config.urls.nodes.clone()).await?.json().await?;
 
     if cur_nodes.version != 2 {
         bail!(NodeListError::UnsupportedVersion {
@@ -152,70 +147,67 @@ pub async fn update_nodes(
 
     // Compute which nodes changed their state, also update node names in DB
     let changed: Vec<(String, NodeData)> = db
-        .transaction::<_, anyhow::Error, _>(|db| {
-            async move {
-                let mut changed = Vec::new();
+        .run(move |db| {
+            db.transaction::<_, anyhow::Error, _>(|db| {
+                {
+                    let mut changed = Vec::new();
 
-                // Go over every node in the database
-                let db_nodes = nodes::table.load::<models::NodeQuery>(db).await?;
-                for db_node in db_nodes.into_iter() {
-                    let (id, db_data) = model_to_node_data(db_node);
-                    if let Some(cur_data) = cur_nodes_map.remove(&id) {
-                        // We already know this node.
-                        // Did it change?
-                        if cur_data != db_data {
-                            // Update in database
-                            diesel::update(nodes::table.find(id.as_str()))
-                                .set((
-                                    nodes::name.eq(cur_data.name.as_str()),
-                                    nodes::online.eq(cur_data.online),
-                                ))
-                                .execute(db)
-                                .await?;
+                    // Go over every node in the database
+                    let db_nodes = nodes::table.load::<models::NodeQuery>(db)?;
+                    for db_node in db_nodes.into_iter() {
+                        let (id, db_data) = model_to_node_data(db_node);
+                        if let Some(cur_data) = cur_nodes_map.remove(&id) {
+                            // We already know this node.
+                            // Did it change?
+                            if cur_data != db_data {
+                                // Update in database
+                                diesel::update(nodes::table.find(id.as_str()))
+                                    .set((
+                                        nodes::name.eq(cur_data.name.as_str()),
+                                        nodes::online.eq(cur_data.online),
+                                    ))
+                                    .execute(db)?;
+                            }
+                            // Did its online status change?
+                            if cur_data.online != db_data.online {
+                                changed.push((id, cur_data));
+                            }
+                        } else {
+                            // The node is in the DB but does not exist any more.
+                            diesel::delete(nodes::table.find(id.as_str())).execute(db)?;
+                            if db_data.online {
+                                // The node was online, so it being gone is a change to offline
+                                changed.push((
+                                    id,
+                                    NodeData {
+                                        online: false,
+                                        ..db_data
+                                    },
+                                ));
+                            }
                         }
-                        // Did its online status change?
-                        if cur_data.online != db_data.online {
+                    }
+
+                    // Go over nodes remaining in the hash map -- they are not in the DB
+                    for (id, cur_data) in cur_nodes_map.into_iter() {
+                        // Insert into DB
+                        diesel::insert_into(nodes::table)
+                            .values(&models::Node {
+                                id: id.as_str(),
+                                name: cur_data.name.as_str(),
+                                online: cur_data.online,
+                            })
+                            .execute(db)?;
+                        if cur_data.online {
+                            // The node is online, so it appearing is a change from the implicit offline
+                            // it was in when it did not exist.
                             changed.push((id, cur_data));
                         }
-                    } else {
-                        // The node is in the DB but does not exist any more.
-                        diesel::delete(nodes::table.find(id.as_str()))
-                            .execute(db)
-                            .await?;
-                        if db_data.online {
-                            // The node was online, so it being gone is a change to offline
-                            changed.push((
-                                id,
-                                NodeData {
-                                    online: false,
-                                    ..db_data
-                                },
-                            ));
-                        }
                     }
-                }
 
-                // Go over nodes remaining in the hash map -- they are not in the DB
-                for (id, cur_data) in cur_nodes_map.into_iter() {
-                    // Insert into DB
-                    diesel::insert_into(nodes::table)
-                        .values(&models::Node {
-                            id: id.as_str(),
-                            name: cur_data.name.as_str(),
-                            online: cur_data.online,
-                        })
-                        .execute(db)
-                        .await?;
-                    if cur_data.online {
-                        // The node is online, so it appearing is a change from the implicit offline
-                        // it was in when it did not exist.
-                        changed.push((id, cur_data));
-                    }
+                    Ok(changed)
                 }
-
-                Ok(changed)
-            }
-            .scope_boxed()
+            })
         })
         .await?;
 
@@ -223,12 +215,16 @@ pub async fn update_nodes(
     // we have an external side-effect, the email, which we cannot roll back anyway)
     for (id, cur_data) in changed.into_iter() {
         // See who monitors this node
-        let watchers = {
-            monitors::table
-                .filter(monitors::id.eq(id.as_str()))
-                .load::<models::MonitorQuery>(db)
-                .await?
-        };
+        let watchers = db
+            .run({
+                let id = id.clone();
+                move |db| {
+                    monitors::table
+                        .filter(monitors::id.eq(id.as_str()))
+                        .load::<models::MonitorQuery>(db)
+                }
+            })
+            .await?;
         // Send them email
         let node = cur_data.into_model(id);
         for watcher in watchers.iter() {

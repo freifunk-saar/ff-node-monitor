@@ -120,19 +120,24 @@ impl<'r> FromRequest<'r> for EmailSender<'r> {
 
 impl<'r> EmailSender<'r> {
     /// Build an email from a template and send it
-    pub async fn email(&self, email_template: &'static str, vals: serde_json::Value, to: &str) -> Result<()> {
-        let email_text = Template::show(self.rocket, email_template, vals).unwrap();
+    pub async fn email(
+        &self,
+        email_template: &'static str,
+        vals: serde_json::Value,
+        to: &str,
+    ) -> Result<()> {
+        let email_text = Template::show(
+            self.rocket,
+            email_template,
+            self.config.template_vals(vals)?,
+        )
+        .unwrap();
         //let email_text = self.responder_body(email_template).await?;
-        let email_parts: Vec<&str> = email_text.splitn(4, '\n').collect();
-        let (empty, email_from, email_subject, email_body) = (
+        let email_parts: Vec<&str> = email_text.splitn(3, '\n').collect();
+        let (email_from, email_subject, email_body) = (
             email_parts[0],
             email_parts[1],
             email_parts[2],
-            email_parts[3],
-        );
-        assert!(
-            empty.is_empty(),
-            "The first line of the email template must be empty"
         );
 
         // Build email

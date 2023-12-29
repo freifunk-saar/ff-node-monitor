@@ -78,18 +78,41 @@ pub struct Config {
 }
 
 pub fn fairing(section: &'static str) -> impl Fairing {
-    AdHoc::on_ignite("Parse application configuration", move |rocket| async move {
-        let config: Config = rocket.figment().extract_inner(section).unwrap_or_else(|_| {
-            panic!("[{}] table in Rocket.toml missing or not a table", section)
-        });
-        let mail_ctx = {
-            let from = Email::try_from(config.ui.email_from.as_str())
-                .expect("`email_from` is not a valid email address");
-            let unique_part = Uuid::new_v4().to_string().parse().unwrap();
-            simple_context::new(from.domain, unique_part).unwrap()
-        };
-        rocket.manage(config).manage(mail_ctx)
-    })
+    AdHoc::on_ignite(
+        "Parse application configuration",
+        move |rocket| async move {
+            let config: Config = rocket.figment().extract_inner(section).unwrap_or_else(|_| {
+                panic!("[{}] table in Rocket.toml missing or not a table", section)
+            });
+            let mail_ctx = {
+                let from = Email::try_from(config.ui.email_from.as_str())
+                    .expect("`email_from` is not a valid email address");
+                let unique_part = Uuid::new_v4().to_string().parse().unwrap();
+                simple_context::new(from.domain, unique_part).unwrap()
+            };
+            rocket.manage(config).manage(mail_ctx)
+        },
+    )
+}
+
+impl Config {
+    pub fn template_vals(&self, mut vals: serde_json::Value) -> Result<serde_json::Value> {
+        if let Some(obj) = vals.as_object_mut() {
+            let old = obj.insert(
+                "config".to_string(),
+                json!({
+                    "ui": self.ui,
+                    "urls": self.urls,
+                }),
+            );
+            if old.is_some() {
+                bail!("Someone else already put a config here")
+            }
+        } else {
+            bail!("The context must be a JSON object")
+        }
+        Ok(vals)
+    }
 }
 
 /// A request guard that makes the config available to all templates
@@ -100,7 +123,13 @@ impl<'r> FromRequest<'r> for Renderer<'r> {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        Outcome::Success(Renderer(request.guard::<&State<Config>>().await.expect("config").inner()))
+        Outcome::Success(Renderer(
+            request
+                .guard::<&State<Config>>()
+                .await
+                .expect("config")
+                .inner(),
+        ))
     }
 }
 
@@ -108,22 +137,8 @@ impl<'a> Renderer<'a> {
     pub fn render(
         &self,
         name: impl Into<Cow<'static, str>>,
-        mut context: serde_json::Value,
+        vals: serde_json::Value,
     ) -> Result<Template> {
-        if let Some(obj) = context.as_object_mut() {
-            let old = obj.insert(
-                "config".to_string(),
-                json!({
-                    "ui": self.0.ui,
-                    "urls": self.0.urls,
-                }),
-            );
-            if old.is_some() {
-                bail!("Someone else already put a config here")
-            }
-        } else {
-            bail!("The context must be a JSON object")
-        }
-        Ok(Template::render(name, context))
+        Ok(Template::render(name, self.0.template_vals(vals)?))
     }
 }
