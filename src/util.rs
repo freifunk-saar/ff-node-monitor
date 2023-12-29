@@ -14,6 +14,8 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::ops::Deref;
+
 use rocket::{
     form::{self, FromFormField},
     request::{self, FromRequest, Outcome},
@@ -28,8 +30,6 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::config::Config;
-
-use std::ops::Deref;
 
 /// Module for serde "with" to use hex encoding to byte arrays
 pub mod hex_signing_key {
@@ -134,14 +134,11 @@ impl<'r> EmailSender<'r> {
         .unwrap();
         //let email_text = self.responder_body(email_template).await?;
         let email_parts: Vec<&str> = email_text.splitn(3, '\n').collect();
-        let (email_from, email_subject, email_body) = (
-            email_parts[0],
-            email_parts[1],
-            email_parts[2],
-        );
+        let (email_from, email_subject, email_body) =
+            (email_parts[0], email_parts[1], email_parts[2]);
 
         // Build email
-        let from = Email::try_from(self.config.ui.email_from.as_str())
+        let from = <Email as HeaderTryFrom<_>>::try_from(self.config.ui.email_from.as_str())
             .map_err(EmailError::ComponentCreation)?;
         let mut mail = Mail::plain_text(email_body, self.mail_ctx);
         mail.insert_headers(

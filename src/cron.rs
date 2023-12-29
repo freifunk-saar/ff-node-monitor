@@ -14,13 +14,13 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::collections::HashMap;
+
 use anyhow::{bail, Result};
 use diesel::prelude::*;
 use rocket::uri;
 use serde_json::{self, json};
 use thiserror::Error;
-
-use std::collections::HashMap;
 
 use crate::config;
 use crate::models;
@@ -123,7 +123,10 @@ pub async fn update_nodes(
     config: &config::Config,
     email_sender: EmailSender<'_>,
 ) -> Result<UpdateResult> {
-    let cur_nodes: json::Nodes = reqwest::get(config.urls.nodes.clone()).await?.json().await?;
+    let cur_nodes: json::Nodes = reqwest::get(config.urls.nodes.clone())
+        .await?
+        .json()
+        .await?;
 
     if cur_nodes.version != 2 {
         bail!(NodeListError::UnsupportedVersion {

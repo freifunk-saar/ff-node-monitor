@@ -14,17 +14,16 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use std::collections::HashSet;
+
 use rocket::{form::Form, response::Debug, State};
 use rocket::{get, post, routes, uri};
 use rocket_dyn_templates::Template;
 
-use base64;
 use diesel::prelude::*;
 use rmp_serde::from_slice as deserialize_from_slice;
 use rmp_serde::to_vec as serialize_to_vec;
 use serde_json::json;
-
-use std::collections::HashSet;
 
 use crate::action::*;
 use crate::config::{Config, Renderer};
