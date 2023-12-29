@@ -14,40 +14,27 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use rocket::request::FromFormValue;
-use rocket::http::RawStr;
+use rocket::form::FromFormField;
 use rocket::FromForm;
 
-use diesel::prelude::*;
+use anyhow::{bail, Result};
 use diesel;
-use diesel::result::{Error as DieselError, DatabaseErrorKind};
-use ring::{hmac, error};
-use anyhow::{Result, bail};
+use diesel::prelude::*;
+use diesel::result::{DatabaseErrorKind, Error as DieselError};
+use ring::{error, hmac};
 use rmp_serde::to_vec as serialize_to_vec;
 use serde::{Deserialize, Serialize};
-use serde_repr::{Serialize_repr, Deserialize_repr};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::schema::*;
 use crate::models::*;
+use crate::schema::*;
 use crate::util::EmailAddress;
 
-#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone, FromFormField)]
 #[repr(u8)]
 pub enum Operation {
     Add = 1,
     Remove = 0,
-}
-
-impl<'v> FromFormValue<'v> for Operation {
-    type Error = &'v RawStr;
-
-    fn from_form_value(v: &'v RawStr) -> Result<Self, Self::Error> {
-        match v.as_str() {
-            "add" => Ok(Operation::Add),
-            "remove" => Ok(Operation::Remove),
-            _ => Err(v),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, FromForm, Clone)]
@@ -81,22 +68,31 @@ impl Action {
     pub fn sign(self, key: &hmac::SigningKey) -> SignedAction {
         let signature = self.compute_signature(key);
         let signature = signature.as_ref().to_vec().into_boxed_slice();
-        SignedAction { action: self, signature }
+        SignedAction {
+            action: self,
+            signature,
+        }
     }
 
-    pub fn run(&self, db: &PgConnection) -> Result<bool> {
-        let m = Monitor { id: self.node.as_str(), email: self.email.as_str() };
-        db.transaction::<_, anyhow::Error, _>(|| {
-            Ok(match self.op {
+    pub async fn run(&self, db: &crate::DbConn) -> Result<bool> {
+        let op = self.op;
+        let node = self.node.clone();
+        let email = self.email.clone();
+        db.run(move |db| {
+            let m = Monitor {
+                id: node.as_str(),
+                email: email.as_str(),
+            };
+            Ok(match op {
                 Operation::Add => {
                     // Add node.  We are fine if it does not exist.
-                    let r = diesel::insert_into(monitors::table)
-                        .values(&m)
-                        .execute(db);
+                    let r = diesel::insert_into(monitors::table).values(&m).execute(db);
                     // Handle UniqueViolation gracefully
                     match r {
                         Ok(_) => true,
-                        Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => false,
+                        Err(DieselError::DatabaseError(DatabaseErrorKind::UniqueViolation, _)) => {
+                            false
+                        }
                         Err(e) => bail!(e),
                     }
                 }
@@ -106,6 +102,7 @@ impl Action {
                 }
             })
         })
+        .await
     }
 }
 

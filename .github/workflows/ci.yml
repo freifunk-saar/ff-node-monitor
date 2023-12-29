@@ -10,24 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Install correct toolchain
-        shell: bash
-        run: |
-          if [[ ${{ github.event_name }} == 'schedule' ]]; then
-            RUST_TOOLCHAIN=nightly
-          else
-            RUST_TOOLCHAIN=$(cat rust-version)
-          fi
-          echo "Installing Rust version: $RUST_TOOLCHAIN"
-          rustup override set $RUST_TOOLCHAIN
-
-      - name: Show Rust version
-        run: |
-          rustup show
-          rustc -Vv
-          cargo -V
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Build
         run: RUSTFLAGS="-D warnings" cargo build --locked

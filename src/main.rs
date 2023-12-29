@@ -14,50 +14,55 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#![feature(proc_macro_hygiene, decl_macro, try_blocks)]
-
-// FIXME: Diesel macros generate warnings
-#![allow(proc_macro_derive_resolution_fallback)]
-
 // FIXME: Get rid of the remaining `extern crate` once we can
-#[macro_use] extern crate diesel as diesel_macros;
+#[macro_use]
+extern crate diesel as diesel_macros;
 
 // FIXME: Get rid of the remaining `macro_use` once we can
-#[macro_use] mod util;
-mod routes;
+#[macro_use]
+mod util;
 mod action;
-mod models;
-mod schema;
 mod config;
 mod cron;
+mod models;
+mod routes;
+mod schema;
 
-use rocket_contrib::{
-    database,
-    databases::diesel,
-    templates::Template,
-    serve::StaticFiles,
-};
+use rocket::launch;
+
+use diesel_migrations::MigrationHarness;
+use rocket_dyn_templates::Template;
+use rocket_sync_db_pools::{database, diesel};
 
 // DB connection guard type
 #[database("postgres")]
 struct DbConn(diesel::PgConnection);
 
-fn main() {
+#[launch]
+fn rocket() -> _ {
     // Launch the rocket (also initializes `log` facade)
-    rocket::ignite()
+    rocket::build()
         .attach(DbConn::fairing())
-        .attach(rocket::fairing::AdHoc::on_attach("Run DB migrations", |rocket| {
-            let conn = DbConn::get_one(&rocket)
-                .expect("could not connect to DB for migrations");
-            diesel_migrations::run_pending_migrations(&*conn)
-                .expect("failed to run migrations");
-            Ok(rocket)
-        }))
+        .attach(rocket::fairing::AdHoc::on_ignite(
+            "Run DB migrations",
+            |rocket| async {
+                let migrations =
+                    diesel_migrations::FileBasedMigrations::find_migrations_directory()
+                        .expect("could not load migrations");
+                let conn = DbConn::get_one(&rocket)
+                    .await
+                    .expect("could not connect to DB for migrations");
+                conn.run(move |db| {
+                    db.run_pending_migrations(migrations).unwrap();
+                })
+                .await;
+                rocket
+            },
+        ))
         .attach(config::fairing("ff-node-monitor"))
         .attach(Template::custom(|engines| {
             engines.handlebars.set_strict_mode(true);
         }))
-        .mount("/static", StaticFiles::from("static"))
+        .mount("/static", rocket::fs::FileServer::from("static"))
         .mount("/", routes::routes())
-        .launch();
 }

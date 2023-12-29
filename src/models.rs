@@ -25,7 +25,7 @@ pub struct MonitorQuery {
 }
 
 #[derive(Insertable, Identifiable)]
-#[primary_key(id, email)]
+#[diesel(primary_key(id, email))]
 pub struct Monitor<'a> {
     pub id: &'a str,
     pub email: &'a str,
@@ -47,7 +47,7 @@ pub struct MonitorNodeQuery {
 }
 
 #[derive(Insertable, Identifiable)]
-#[primary_key(id)]
+#[diesel(primary_key(id))]
 pub struct Node<'a> {
     pub id: &'a str,
     pub name: &'a str,
