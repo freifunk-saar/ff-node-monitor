@@ -115,7 +115,7 @@ impl Config {
     }
 }
 
-/// A request guard that makes the config available to all templates
+/// A request guard that makes the config available to all templates.
 pub struct Renderer<'a>(&'a Config);
 
 #[rocket::async_trait]
