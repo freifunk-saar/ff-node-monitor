@@ -14,12 +14,6 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// FIXME: Get rid of the remaining `extern crate` once we can
-#[macro_use]
-extern crate diesel as diesel_macros;
-
-// FIXME: Get rid of the remaining `macro_use` once we can
-#[macro_use]
 mod util;
 mod action;
 mod config;

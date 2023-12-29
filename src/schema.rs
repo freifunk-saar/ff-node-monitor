@@ -1,11 +1,13 @@
-table! {
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
     monitors (id, email) {
         id -> Varchar,
         email -> Varchar,
     }
 }
 
-table! {
+diesel::table! {
     nodes (id) {
         id -> Varchar,
         name -> Varchar,
@@ -13,4 +15,7 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(monitors, nodes,);
+diesel::allow_tables_to_appear_in_same_query!(
+    monitors,
+    nodes,
+);
