@@ -64,8 +64,7 @@ impl Secrets {
     /// Getters for default values
     pub fn get_smtp_host(&self) -> &str {
         self.smtp_host
-            .as_ref()
-            .map(String::as_str)
+            .as_deref()
             .unwrap_or("localhost")
     }
 }

@@ -208,7 +208,7 @@ async fn cron_route(
     email_sender: EmailSender<'_>,
 ) -> Result<Template> {
     Ok(
-        match cron::update_nodes(&db, &*config, email_sender).await? {
+        match cron::update_nodes(&db, config, email_sender).await? {
             cron::UpdateResult::NotEnoughOnline(online) => renderer.render(
                 "cron_error",
                 json!({
