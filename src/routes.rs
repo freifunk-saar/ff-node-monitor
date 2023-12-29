@@ -167,14 +167,14 @@ async fn run_action(
     config: &State<Config>,
 ) -> Result<Template> {
     // Determine and verify action
-    let action: Result<Action> = try {
+    let action: Result<Action> = (|| {
         let signed_action = base64::decode(signed_action.as_str()).map_err(|e| Debug(e.into()))?;
         let signed_action: SignedAction =
             deserialize_from_slice(signed_action.as_slice()).map_err(|e| Debug(e.into()))?;
-        signed_action
+        Ok(signed_action
             .verify(&config.secrets.action_signing_key)
-            .map_err(|e| Debug(e.into()))?
-    };
+            .map_err(|e| Debug(e.into()))?)
+    })();
     let action = match action {
         Ok(a) => a,
         Err(_) => return Ok(renderer.render("run_action_error", json!({}))?),

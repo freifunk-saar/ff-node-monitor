@@ -38,17 +38,13 @@ Make sure you have at least 1.5 GB free disk space.
     ```
 
 4.  *ff-node-monitor* is written in [Rust](https://www.rust-lang.org/) using
-    [Rocket](https://rocket.rs/), which means it needs a nightly version of Rust:
+    [Rocket](https://rocket.rs/). Any recent stable version of Rust should work:
 
     ```
     curl https://sh.rustup.rs -sSf > rustup.sh
-    sudo -u ff-node-monitor sh rustup.sh --default-toolchain $(cat rust-version)
+    sudo -u ff-node-monitor sh rustup.sh
     rm rustup.sh
     ```
-
-    The file `rust-version` always contains a tested nightly version number. If
-    you want the latest nightly version instead, just use `--default-toolchain
-    nightly`. However, the build might fail then.
 
 5.  Build *ff-node-monitor*:
 
