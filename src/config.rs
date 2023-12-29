@@ -57,7 +57,7 @@ impl Urls {
 pub struct Secrets {
     pub smtp_host: Option<String>,
     #[serde(with = "util::hex_signing_key")]
-    pub action_signing_key: hmac::SigningKey,
+    pub action_signing_key: hmac::Key,
 }
 
 impl Secrets {

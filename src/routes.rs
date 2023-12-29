@@ -172,7 +172,7 @@ async fn run_action(
             deserialize_from_slice(signed_action.as_slice()).map_err(|e| Debug(e.into()))?;
         Ok(signed_action
             .verify(&config.secrets.action_signing_key)
-            .map_err(|e| Debug(e.into()))?)
+            .map_err(|_| anyhow::anyhow!("signature verification failed"))?)
     })();
     let action = match action {
         Ok(a) => a,

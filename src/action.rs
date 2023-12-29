@@ -51,21 +51,21 @@ pub struct SignedAction {
 }
 
 impl Action {
-    fn compute_signature(&self, key: &hmac::SigningKey) -> hmac::Signature {
+    fn compute_signature(&self, key: &hmac::Key) -> hmac::Tag {
         let buf = serialize_to_vec(self).expect("failed to encode Action");
         hmac::sign(&key, buf.as_slice())
     }
 
     fn verify_signature(
         &self,
-        key: &hmac::SigningKey,
+        key: &hmac::Key,
         signature: &[u8],
     ) -> Result<(), error::Unspecified> {
         let buf = serialize_to_vec(self).expect("failed to encode Action");
-        hmac::verify_with_own_key(&key, buf.as_slice(), signature)
+        hmac::verify(&key, buf.as_slice(), signature)
     }
 
-    pub fn sign(self, key: &hmac::SigningKey) -> SignedAction {
+    pub fn sign(self, key: &hmac::Key) -> SignedAction {
         let signature = self.compute_signature(key);
         let signature = signature.as_ref().to_vec().into_boxed_slice();
         SignedAction {
@@ -107,7 +107,7 @@ impl Action {
 }
 
 impl SignedAction {
-    pub fn verify(self, key: &hmac::SigningKey) -> Result<Action, error::Unspecified> {
+    pub fn verify(self, key: &hmac::Key) -> Result<Action, error::Unspecified> {
         // Using a match to make it really clear we don't return the action in case of failure
         match self.action.verify_signature(key, &*self.signature) {
             Ok(_) => Ok(self.action),

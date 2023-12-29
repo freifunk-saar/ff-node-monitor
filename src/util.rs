@@ -34,15 +34,15 @@ use crate::config::Config;
 /// Module for serde "with" to use hex encoding to byte arrays
 pub mod hex_signing_key {
     use hex;
-    use ring::{digest, hmac};
+    use ring::hmac;
     use serde::{de::Error, Deserialize, Deserializer};
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<hmac::SigningKey, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<hmac::Key, D::Error>
     where
         D: Deserializer<'de>,
     {
         let bytes = hex::decode(String::deserialize(deserializer)?).map_err(Error::custom)?;
-        Ok(hmac::SigningKey::new(&digest::SHA256, bytes.as_slice()))
+        Ok(hmac::Key::new(hmac::HMAC_SHA256, bytes.as_slice()))
     }
 }
 
