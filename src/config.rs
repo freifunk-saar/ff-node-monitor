@@ -22,12 +22,11 @@ use rocket::{self, http::uri, request::Outcome, State};
 use rocket_dyn_templates::Template;
 
 use anyhow::{bail, Result};
-use mail::{default_impl::simple_context, Email, HeaderTryFrom};
+use lettre::address::Address;
 use ring::hmac;
 use serde::{Deserialize, Serialize};
 use serde_json::{self, json};
 use url::Url;
-use uuid::Uuid;
 
 use crate::util;
 
@@ -35,7 +34,7 @@ use crate::util;
 pub struct Ui {
     pub instance_name: String,
     pub instance_article_dative: String,
-    pub email_from: String,
+    pub email_from: Address,
     pub min_online_nodes: Option<usize>,
 }
 
@@ -81,13 +80,7 @@ pub fn fairing(section: &'static str) -> impl Fairing {
             let config: Config = rocket.figment().extract_inner(section).unwrap_or_else(|_| {
                 panic!("[{}] table in Rocket.toml missing or not a table", section)
             });
-            let mail_ctx = {
-                let from = <Email as HeaderTryFrom<_>>::try_from(config.ui.email_from.as_str())
-                    .expect("`email_from` is not a valid email address");
-                let unique_part = Uuid::new_v4().to_string().parse().unwrap();
-                simple_context::new(from.domain, unique_part).unwrap()
-            };
-            rocket.manage(config).manage(mail_ctx)
+            rocket.manage(config)
         },
     )
 }
