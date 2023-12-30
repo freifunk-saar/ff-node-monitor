@@ -17,8 +17,8 @@
 use std::collections::HashSet;
 
 use base64::Engine as _;
-use rocket::{form::Form, response::Debug, State};
-use rocket::{get, post, routes, uri};
+use rocket::{form::Form, response, State};
+use rocket::{get, post, routes, uri, Request};
 use rocket_dyn_templates::Template;
 
 use diesel::prelude::*;
@@ -33,10 +33,28 @@ use crate::models::*;
 use crate::util::{EmailAddress, EmailSender};
 use crate::DbConn;
 
-type Result<T> = std::result::Result<T, Debug<anyhow::Error>>;
-
 const BASE64_ENGINE: base64::engine::GeneralPurpose =
     base64::engine::general_purpose::URL_SAFE_NO_PAD;
+
+/// Custom error type to allow using `?` below.
+struct Error(anyhow::Error);
+
+impl<'r> response::Responder<'r, 'static> for Error {
+    fn respond_to(self, r: &'r Request<'_>) -> response::Result<'static> {
+        response::Debug(self.0).respond_to(r)
+    }
+}
+
+impl<T> From<T> for Error
+where
+    anyhow::Error: From<T>,
+{
+    fn from(value: T) -> Self {
+        Self(value.into())
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
 
 #[get("/")]
 fn index(renderer: Renderer) -> Result<Template> {
@@ -98,7 +116,7 @@ async fn prepare_action(
 
     // obtain bytes for signed action payload
     let signed_action = action.clone().sign(&config.secrets.action_signing_key);
-    let signed_action = serialize_to_vec(&signed_action).map_err(|e| Debug(e.into()))?;
+    let signed_action = serialize_to_vec(&signed_action)?;
     let signed_action = BASE64_ENGINE.encode(&signed_action);
 
     // compute some URLs
@@ -116,8 +134,7 @@ async fn prepare_action(
                 .first::<NodeQuery>(db)
                 .optional()
         })
-        .await
-        .map_err(|e| Debug(e.into()))?;
+        .await?;
     let node_name = match node {
         Some(node) => node.name,
         None if action.op == Operation::Remove =>
@@ -171,11 +188,8 @@ async fn run_action(
 ) -> Result<Template> {
     // Determine and verify action
     let action: Result<Action> = (|| {
-        let signed_action = BASE64_ENGINE
-            .decode(signed_action.as_str())
-            .map_err(|e| Debug(e.into()))?;
-        let signed_action: SignedAction =
-            deserialize_from_slice(signed_action.as_slice()).map_err(|e| Debug(e.into()))?;
+        let signed_action = BASE64_ENGINE.decode(signed_action.as_str())?;
+        let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
         Ok(signed_action
             .verify(&config.secrets.action_signing_key)
             .map_err(|_| anyhow::anyhow!("signature verification failed"))?)
@@ -207,17 +221,15 @@ async fn cron_route(
     renderer: Renderer<'_>,
     email_sender: EmailSender<'_>,
 ) -> Result<Template> {
-    Ok(
-        match cron::update_nodes(&db, &*config, email_sender).await? {
-            cron::UpdateResult::NotEnoughOnline(online) => renderer.render(
-                "cron_error",
-                json!({
-                    "not_enough_online": online,
-                }),
-            ),
-            cron::UpdateResult::AllOk => renderer.render("cron", json!({})),
-        }?,
-    )
+    Ok(match cron::update_nodes(&db, config, email_sender).await? {
+        cron::UpdateResult::NotEnoughOnline(online) => renderer.render(
+            "cron_error",
+            json!({
+                "not_enough_online": online,
+            }),
+        ),
+        cron::UpdateResult::AllOk => renderer.render("cron", json!({})),
+    }?)
 }
 
 pub fn routes() -> Vec<rocket::Route> {

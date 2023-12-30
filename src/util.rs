@@ -23,8 +23,8 @@ use rocket::{
 };
 use rocket_dyn_templates::Template;
 
-use anyhow::{bail, Result};
-use futures::Future;
+use anyhow::Result;
+use futures::compat::Future01CompatExt;
 use mail::{default_impl::simple_context, headers, smtp, Email, HeaderTryFrom, Mail};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -51,16 +51,16 @@ pub mod hex_signing_key {
 pub struct EmailAddress(String);
 
 impl EmailAddress {
-    pub fn new(s: String) -> Result<EmailAddress> {
+    pub fn new<'e>(s: String) -> form::Result<'e, EmailAddress> {
         let email_parts: Vec<&str> = s.split('@').collect();
         if email_parts.len() != 2 {
-            bail!("Too many or two few @");
+            return Err(rocket::form::Error::validation("invalid credit card number").into());
         }
         if email_parts[0].is_empty() {
-            bail!("User part is empty");
+            return Err(rocket::form::Error::validation("User part is empty").into());
         }
         if email_parts[1].find('.').is_none() {
-            bail!("Domain part must contain .");
+            return Err(rocket::form::Error::validation("Domain part must contain .").into());
         }
         Ok(EmailAddress(s))
     }
@@ -69,7 +69,8 @@ impl EmailAddress {
 #[rocket::async_trait]
 impl<'r> FromFormField<'r> for EmailAddress {
     fn from_value(field: form::ValueField<'r>) -> form::Result<'r, Self> {
-        Ok(EmailAddress(String::from_value(field)?))
+        // `new` does address validation
+        EmailAddress::new(String::from_value(field)?)
     }
 }
 
@@ -132,7 +133,6 @@ impl<'r> EmailSender<'r> {
             self.config.template_vals(vals)?,
         )
         .unwrap();
-        //let email_text = self.responder_body(email_template).await?;
         let email_parts: Vec<&str> = email_text.splitn(3, '\n').collect();
         let (email_from, email_subject, email_body) =
             (email_parts[0], email_parts[1], email_parts[2]);
@@ -160,7 +160,8 @@ impl<'r> EmailSender<'r> {
             smtp::ConnectionConfig::builder_with_port(smtp_host.parse()?, 25)?.build()
         };
         Ok(smtp::send(mail.into(), config, self.mail_ctx.clone())
-            .wait()
+            .compat()
+            .await
             .map_err(EmailError::MailSend)?)
     }
 }

@@ -63,10 +63,7 @@ pub struct Secrets {
 impl Secrets {
     /// Getters for default values
     pub fn get_smtp_host(&self) -> &str {
-        self.smtp_host
-            .as_ref()
-            .map(String::as_str)
-            .unwrap_or("localhost")
+        self.smtp_host.as_deref().unwrap_or("localhost")
     }
 }
 
@@ -115,7 +112,7 @@ impl Config {
     }
 }
 
-/// A request guard that makes the config available to all templates
+/// A request guard that makes the config available to all templates.
 pub struct Renderer<'a>(&'a Config);
 
 #[rocket::async_trait]

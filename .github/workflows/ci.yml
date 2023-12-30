@@ -3,8 +3,6 @@ name: CI
 on:
   pull_request:
   merge_group:
-  schedule:
-    - cron: '42 2 * * SAT' # At 2:42 UTC every Saturday.
 
 jobs:
   build:
@@ -12,6 +10,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
-
       - name: Build
-        run: RUSTFLAGS="-D warnings" cargo build --locked
+        run: cargo build --locked
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.75.0
+          components: rustfmt, clippy
+      - name: rustfmt
+        run: cargo fmt --check
+      - name: clippy
+        run: cargo clippy -- -D warnings
