@@ -133,7 +133,6 @@ impl<'r> EmailSender<'r> {
             self.config.template_vals(vals)?,
         )
         .unwrap();
-        //let email_text = self.responder_body(email_template).await?;
         let email_parts: Vec<&str> = email_text.splitn(3, '\n').collect();
         let (email_from, email_subject, email_body) =
             (email_parts[0], email_parts[1], email_parts[2]);
