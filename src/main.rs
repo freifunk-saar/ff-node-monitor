@@ -14,13 +14,13 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-mod util;
 mod action;
 mod config;
 mod cron;
 mod models;
 mod routes;
 mod schema;
+mod util;
 
 use rocket::launch;
 
