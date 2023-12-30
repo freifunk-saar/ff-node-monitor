@@ -26,5 +26,5 @@ hex = "0.4.3"
 reqwest = { version = "0.11", features = ["json"] }
 chrono = { version = "0.4.2", features = ["serde"] }
 mail = { version = "0.7", features = ["smtp"] }
-futures = "0.1" # cannot use newer version due to mail
+futures = { version = "0.3",  features = ["compat"] }
 uuid = { version = "1.0", features = ["v4"] }

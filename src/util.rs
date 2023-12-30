@@ -24,7 +24,7 @@ use rocket::{
 use rocket_dyn_templates::Template;
 
 use anyhow::Result;
-use futures::Future;
+use futures::compat::Future01CompatExt;
 use mail::{default_impl::simple_context, headers, smtp, Email, HeaderTryFrom, Mail};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -161,7 +161,8 @@ impl<'r> EmailSender<'r> {
             smtp::ConnectionConfig::builder_with_port(smtp_host.parse()?, 25)?.build()
         };
         Ok(smtp::send(mail.into(), config, self.mail_ctx.clone())
-            .wait()
+            .compat()
+            .await
             .map_err(EmailError::MailSend)?)
     }
 }
