@@ -169,7 +169,6 @@ To upgrade the service to the latest git version, follow these steps:
 cd ~ff-node-monitor/src/
 git pull
 sudo rm target/release/ff-node-monitor
-sudo -u ff-node-monitor ~ff-node-monitor/.cargo/bin/rustup default $(cat rust-version)
 sudo -u ff-node-monitor ~ff-node-monitor/.cargo/bin/cargo build --release
 sudo systemctl restart ff-node-monitor
 ```
