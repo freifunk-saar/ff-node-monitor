@@ -19,7 +19,6 @@ use std::collections::HashMap;
 use anyhow::{bail, Result};
 use diesel::prelude::*;
 use serde_json::{self, json};
-use thiserror::Error;
 
 use rocket::uri;
 
@@ -29,12 +28,6 @@ use crate::models;
 use crate::routes;
 use crate::schema::*;
 use crate::util::Ctx;
-
-#[derive(Debug, Error)]
-enum NodeListError {
-    #[error("got unsupported version number {version}")]
-    UnsupportedVersion { version: usize },
-}
 
 mod json {
     use chrono::{DateTime, Utc};
@@ -128,9 +121,10 @@ impl<'r> Ctx<'r> {
             .await?;
 
         if cur_nodes.version != 2 {
-            bail!(NodeListError::UnsupportedVersion {
-                version: cur_nodes.version
-            });
+            bail!(
+                "unsupported hopglass node list version: {}",
+                cur_nodes.version
+            );
         }
 
         // Build node HashMap: map node ID to name and online state
