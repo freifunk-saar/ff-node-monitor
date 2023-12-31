@@ -17,21 +17,22 @@
 use std::collections::HashSet;
 
 use base64::Engine as _;
-use rocket::{form::Form, response, State};
-use rocket::{get, post, routes, uri, Request};
-use rocket_dyn_templates::Template;
-
 use diesel::prelude::*;
 use rmp_serde::from_slice as deserialize_from_slice;
 use rmp_serde::to_vec as serialize_to_vec;
 use serde_json::json;
 
+use rocket::{form::Form, response, State};
+use rocket::{get, post, routes, uri, Request};
+use rocket_dyn_templates::Template;
+
 use crate::action::*;
-use crate::config::{Config, Renderer};
+use crate::config::Config;
 use crate::cron;
+use crate::db::DbConn;
+use crate::email::EmailAddress;
 use crate::models::*;
-use crate::util::{EmailAddress, EmailSender};
-use crate::DbConn;
+use crate::util::Ctx;
 
 const BASE64_ENGINE: base64::engine::GeneralPurpose =
     base64::engine::general_purpose::URL_SAFE_NO_PAD;
@@ -57,18 +58,18 @@ where
 type Result<T> = std::result::Result<T, Error>;
 
 #[get("/")]
-fn index(renderer: Renderer) -> Result<Template> {
-    Ok(renderer.render("index", json!({}))?)
+fn index(ctx: Ctx<'_>) -> Result<Template> {
+    Ok(ctx.template("index", json!({}))?)
 }
 
 #[get("/list?<email>")]
-async fn list(email: EmailAddress, renderer: Renderer<'_>, db: DbConn) -> Result<Template> {
+async fn list(email: EmailAddress, ctx: Ctx<'_>, db: DbConn) -> Result<Template> {
     use crate::schema::*;
 
     let vars = db
         .run::<_, anyhow::Result<_>>(move |db| {
             let watched_nodes = monitors::table
-                .filter(monitors::email.eq(email.as_str()))
+                .filter(monitors::email.eq(&*email))
                 .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
                 .order_by(monitors::id)
                 .load::<MonitorNodeQuery>(db)?;
@@ -94,20 +95,19 @@ async fn list(email: EmailAddress, renderer: Renderer<'_>, db: DbConn) -> Result
         })
         .await?;
 
-    Ok(renderer.render("list", vars)?)
+    Ok(ctx.template("list", vars)?)
 }
 
 #[get("/list")]
-fn list_formfail(renderer: Renderer) -> Result<Template> {
-    Ok(renderer.render("list_error", json!({}))?)
+fn list_formfail(ctx: Ctx<'_>) -> Result<Template> {
+    Ok(ctx.template("list_error", json!({}))?)
 }
 
 #[post("/prepare_action", data = "<action>")]
 async fn prepare_action(
     action: Form<Action>,
     config: &State<Config>,
-    renderer: Renderer<'_>,
-    email_sender: EmailSender<'_>,
+    ctx: Ctx<'_>,
     db: DbConn,
 ) -> Result<Template> {
     use crate::schema::*;
@@ -144,7 +144,7 @@ async fn prepare_action(
         }
         None => {
             // Trying to add a non-existing node. Stop this.
-            return Ok(renderer.render(
+            return Ok(ctx.template(
                 "prepare_action_error",
                 json!({
                     "action": action,
@@ -155,21 +155,20 @@ async fn prepare_action(
     };
 
     // Build and send email
-    email_sender
-        .email(
-            "confirm_action",
-            json!({
-                "action": action,
-                "node_name": node_name,
-                "action_url": action_url.as_str(),
-                "list_url": list_url.as_str(),
-            }),
-            action.email.as_str(),
-        )
-        .await?;
+    ctx.email(
+        "confirm_action",
+        json!({
+            "action": action,
+            "node_name": node_name,
+            "action_url": action_url.as_str(),
+            "list_url": list_url.as_str(),
+        }),
+        &action.email,
+    )
+    .await?;
 
     // Render
-    Ok(renderer.render(
+    Ok(ctx.template(
         "prepare_action",
         json!({
             "action": action,
@@ -180,31 +179,29 @@ async fn prepare_action(
 }
 
 #[get("/run_action?<signed_action>")]
-async fn run_action(
-    signed_action: String,
-    db: DbConn,
-    renderer: Renderer<'_>,
-    config: &State<Config>,
-) -> Result<Template> {
+async fn run_action(signed_action: String, db: DbConn, ctx: Ctx<'_>) -> Result<Template> {
     // Determine and verify action
     let action: Result<Action> = (|| {
         let signed_action = BASE64_ENGINE.decode(signed_action.as_str())?;
         let signed_action: SignedAction = deserialize_from_slice(signed_action.as_slice())?;
         Ok(signed_action
-            .verify(&config.secrets.action_signing_key)
+            .verify(&ctx.config().secrets.action_signing_key)
             .map_err(|_| anyhow::anyhow!("signature verification failed"))?)
     })();
     let action = match action {
         Ok(a) => a,
-        Err(_) => return Ok(renderer.render("run_action_error", json!({}))?),
+        Err(_) => return Ok(ctx.template("run_action_error", json!({}))?),
     };
 
     // Execute action
     let success = action.run(&db).await?;
 
     // Render
-    let list_url = config.urls.absolute(uri!(list(email = &action.email)));
-    Ok(renderer.render(
+    let list_url = ctx
+        .config()
+        .urls
+        .absolute(uri!(list(email = &action.email)));
+    Ok(ctx.template(
         "run_action",
         json!({
             "action": action,
@@ -215,20 +212,15 @@ async fn run_action(
 }
 
 #[get("/cron")]
-async fn cron_route(
-    db: DbConn,
-    config: &State<Config>,
-    renderer: Renderer<'_>,
-    email_sender: EmailSender<'_>,
-) -> Result<Template> {
-    Ok(match cron::update_nodes(&db, config, email_sender).await? {
-        cron::UpdateResult::NotEnoughOnline(online) => renderer.render(
+async fn cron_route(db: DbConn, ctx: Ctx<'_>) -> Result<Template> {
+    Ok(match ctx.update_nodes(&db).await? {
+        cron::UpdateResult::NotEnoughOnline(online) => ctx.template(
             "cron_error",
             json!({
                 "not_enough_online": online,
             }),
         ),
-        cron::UpdateResult::AllOk => renderer.render("cron", json!({})),
+        cron::UpdateResult::AllOk => ctx.template("cron", json!({})),
     }?)
 }
 

@@ -25,9 +25,10 @@ use rmp_serde::to_vec as serialize_to_vec;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
+use crate::db::DbConn;
+use crate::email::EmailAddress;
 use crate::models::*;
 use crate::schema::*;
-use crate::util::EmailAddress;
 
 #[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Copy, Clone, FromFormField)]
 #[repr(u8)]
@@ -73,14 +74,14 @@ impl Action {
         }
     }
 
-    pub async fn run(&self, db: &crate::DbConn) -> Result<bool> {
+    pub async fn run(&self, db: &DbConn) -> Result<bool> {
         let op = self.op;
         let node = self.node.clone();
         let email = self.email.clone();
         db.run(move |db| {
             let m = Monitor {
                 id: node.as_str(),
-                email: email.as_str(),
+                email: &email,
             };
             Ok(match op {
                 Operation::Add => {

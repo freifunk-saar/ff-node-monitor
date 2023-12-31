@@ -17,44 +17,21 @@
 mod action;
 mod config;
 mod cron;
+mod db;
+mod email;
 mod models;
 mod routes;
 mod schema;
 mod util;
 
-use rocket::launch;
-
-use diesel_migrations::MigrationHarness;
-use rocket_dyn_templates::Template;
-use rocket_sync_db_pools::{database, diesel};
-
-// DB connection guard type
-#[database("postgres")]
-struct DbConn(diesel::PgConnection);
-
-#[launch]
+#[rocket::launch]
 fn rocket() -> _ {
     // Launch the rocket (also initializes `log` facade)
     rocket::build()
-        .attach(DbConn::fairing())
-        .attach(rocket::fairing::AdHoc::on_ignite(
-            "Run DB migrations",
-            |rocket| async {
-                let migrations =
-                    diesel_migrations::FileBasedMigrations::find_migrations_directory()
-                        .expect("could not load migrations");
-                let conn = DbConn::get_one(&rocket)
-                    .await
-                    .expect("could not connect to DB for migrations");
-                conn.run(move |db| {
-                    db.run_pending_migrations(migrations).unwrap();
-                })
-                .await;
-                rocket
-            },
-        ))
+        .attach(db::DbConn::fairing())
+        .attach(db::migration())
         .attach(config::fairing("ff-node-monitor"))
-        .attach(Template::custom(|engines| {
+        .attach(rocket_dyn_templates::Template::custom(|engines| {
             engines.handlebars.set_strict_mode(true);
         }))
         .mount("/static", rocket::fs::FileServer::from("static"))

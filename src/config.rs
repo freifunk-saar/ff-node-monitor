@@ -14,12 +14,8 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::borrow::Cow;
-
 use rocket::fairing::{AdHoc, Fairing};
-use rocket::request::{self, FromRequest, Request};
-use rocket::{self, http::uri, request::Outcome, State};
-use rocket_dyn_templates::Template;
+use rocket::http::uri;
 
 use anyhow::{bail, Result};
 use lettre::address::Address;
@@ -102,33 +98,5 @@ impl Config {
             bail!("The context must be a JSON object")
         }
         Ok(vals)
-    }
-}
-
-/// A request guard that makes the config available to all templates.
-pub struct Renderer<'a>(&'a Config);
-
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for Renderer<'r> {
-    type Error = ();
-
-    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        Outcome::Success(Renderer(
-            request
-                .guard::<&State<Config>>()
-                .await
-                .expect("config")
-                .inner(),
-        ))
-    }
-}
-
-impl<'a> Renderer<'a> {
-    pub fn render(
-        &self,
-        name: impl Into<Cow<'static, str>>,
-        vals: serde_json::Value,
-    ) -> Result<Template> {
-        Ok(Template::render(name, self.0.template_vals(vals)?))
     }
 }
