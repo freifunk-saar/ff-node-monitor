@@ -14,21 +14,16 @@
 //  You should have received a copy of the GNU Affero General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::{ops::Deref, str::FromStr as _};
+use std::borrow::Cow;
+use std::ops::Deref;
+
+use anyhow::Result;
 
 use rocket::{
-    form::{self, FromFormField},
     request::{self, FromRequest, Outcome},
-    Request, UriDisplayQuery,
+    Request,
 };
 use rocket_dyn_templates::Template;
-
-use anyhow::{bail, Result};
-use lettre::{
-    message::{header::ContentType, Mailbox},
-    Address, AsyncSmtpTransport, AsyncTransport as _, Message, Tokio1Executor,
-};
-use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
 
@@ -47,101 +42,35 @@ pub mod hex_signing_key {
     }
 }
 
-/// Type for email addresses in Rocket forms
-#[derive(Clone, Serialize, Deserialize, UriDisplayQuery)]
-pub struct EmailAddress(String);
+/// A request guard to get access to the rocket.
+pub struct Ctx<'r>(&'r rocket::Rocket<rocket::Orbit>);
 
-impl EmailAddress {
-    pub fn new<'e>(s: String) -> form::Result<'e, EmailAddress> {
-        let email_parts: Vec<&str> = s.split('@').collect();
-        if email_parts.len() != 2 {
-            return Err(rocket::form::Error::validation("invalid credit card number").into());
-        }
-        if email_parts[0].is_empty() {
-            return Err(rocket::form::Error::validation("User part is empty").into());
-        }
-        if email_parts[1].find('.').is_none() {
-            return Err(rocket::form::Error::validation("Domain part must contain .").into());
-        }
-        Ok(EmailAddress(s))
-    }
-}
-
-#[rocket::async_trait]
-impl<'r> FromFormField<'r> for EmailAddress {
-    fn from_value(field: form::ValueField<'r>) -> form::Result<'r, Self> {
-        // `new` does address validation
-        EmailAddress::new(String::from_value(field)?)
-    }
-}
-
-impl Deref for EmailAddress {
-    type Target = String;
+impl Deref for Ctx<'_> {
+    type Target = rocket::Rocket<rocket::Orbit>;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.0
     }
-}
-
-/// To send an email we need to render a template and for that we need to get access to the rocket,
-/// and that seems t require a `FromRequest` impl.
-pub struct EmailSender<'a> {
-    rocket: &'a rocket::Rocket<rocket::Orbit>,
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for EmailSender<'r> {
+impl<'r> FromRequest<'r> for Ctx<'r> {
     type Error = ();
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        Outcome::Success(EmailSender {
-            rocket: request.rocket(),
-        })
+        Outcome::Success(Ctx(request.rocket()))
     }
 }
 
-impl<'r> EmailSender<'r> {
-    /// Build an email from a template and send it
-    pub async fn email(
+impl Ctx<'_> {
+    pub fn config(&self) -> &Config {
+        self.state::<Config>().unwrap()
+    }
+
+    pub fn template(
         &self,
-        email_template: &'static str,
+        name: impl Into<Cow<'static, str>>,
         vals: serde_json::Value,
-        to: &str,
-    ) -> Result<()> {
-        let config = self.rocket.state::<Config>().unwrap();
-        let email_text =
-            Template::show(self.rocket, email_template, config.template_vals(vals)?).unwrap();
-        let email_parts: Vec<&str> = email_text.splitn(3, '\n').collect();
-        let (email_from, email_subject, email_body) =
-            (email_parts[0], email_parts[1], email_parts[2]);
-
-        // Build email
-        let message = Message::builder()
-            .from(Mailbox::new(
-                Some(email_from.to_owned()),
-                config.ui.email_from.clone(),
-            ))
-            .to(Address::from_str(to)?.into())
-            .subject(email_subject)
-            .header(ContentType::TEXT_PLAIN)
-            .body(email_body.to_owned())
-            .unwrap();
-
-        // Send email
-        let smtp_host = config.secrets.get_smtp_host();
-        let mailer = if smtp_host == "localhost" {
-            AsyncSmtpTransport::unencrypted_localhost() // always port 25
-        } else {
-            AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_host)?
-                .port(25)
-                .build()
-        };
-        let r = mailer.send(message).await?;
-        if !r.is_positive() {
-            bail!(
-                "sending email failed:\n{}",
-                r.first_line().unwrap_or("<no message>")
-            );
-        }
-        Ok(())
+    ) -> Result<Template> {
+        Ok(Template::render(name, self.config().template_vals(vals)?))
     }
 }
