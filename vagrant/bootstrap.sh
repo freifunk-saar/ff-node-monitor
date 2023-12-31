@@ -47,7 +47,7 @@ test -d src || $ffsudo git clone https://github.com/freifunk-saar/ff-node-monito
 
 : "#### ff-node-monitor is written in Rust using Rocket, which means it needs a nightly version of Rust:"
 if ! test -f $HOME_PATH/.cargo/bin/rustc; then
-    curl https://sh.rustup.rs -sSf | $ffsudo sh -s -- -y --default-toolchain $(cat "$HOME_PATH/src/rust-version")
+    curl https://sh.rustup.rs -sSf | $ffsudo sh -s -- -y
 fi
 cd "$HOME_PATH/src"
 $ffsudo "$HOME_PATH/.cargo/bin/cargo" build --release
