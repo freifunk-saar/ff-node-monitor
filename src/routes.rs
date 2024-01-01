@@ -67,7 +67,7 @@ async fn list(email: EmailAddress, ctx: Ctx<'_>, db: DbConn) -> Result<Template>
     use crate::schema::*;
 
     let vars = db
-        .run::<_, anyhow::Result<_>>(move |db| {
+        .run_transaction(move |db| {
             let watched_nodes = monitors::table
                 .filter(monitors::email.eq(&*email))
                 .left_join(nodes::table.on(monitors::id.eq(nodes::id)))
