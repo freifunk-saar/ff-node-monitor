@@ -78,7 +78,7 @@ impl Action {
         let op = self.op;
         let node = self.node.clone();
         let email = self.email.clone();
-        db.run(move |db| {
+        db.run_transaction(move |db| {
             let m = Monitor {
                 id: node.as_str(),
                 email: &email,
