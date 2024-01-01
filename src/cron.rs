@@ -143,67 +143,65 @@ impl<'r> Ctx<'r> {
 
         // Compute which nodes changed their state, also update node names in DB
         let changed: Vec<(String, NodeData)> = db
-            .run(move |db| {
-                db.transaction::<_, anyhow::Error, _>(|db| {
-                    {
-                        let mut changed = Vec::new();
+            .run_transaction(move |db| {
+                {
+                    let mut changed = Vec::new();
 
-                        // Go over every node in the database
-                        let db_nodes = nodes::table.load::<models::NodeQuery>(db)?;
-                        for db_node in db_nodes.into_iter() {
-                            let (id, db_data) = model_to_node_data(db_node);
-                            if let Some(cur_data) = cur_nodes_map.remove(&id) {
-                                // We already know this node.
-                                // Did it change?
-                                if cur_data != db_data {
-                                    // Update in database
-                                    diesel::update(nodes::table.find(id.as_str()))
-                                        .set((
-                                            nodes::name.eq(cur_data.name.as_str()),
-                                            nodes::online.eq(cur_data.online),
-                                        ))
-                                        .execute(db)?;
-                                }
-                                // Did its online status change?
-                                if cur_data.online != db_data.online {
-                                    changed.push((id, cur_data));
-                                }
-                            } else {
-                                // The node is in the DB but does not exist any more.
-                                diesel::delete(nodes::table.find(id.as_str())).execute(db)?;
-                                if db_data.online {
-                                    // The node was online, so it being gone is a change to offline
-                                    changed.push((
-                                        id,
-                                        NodeData {
-                                            online: false,
-                                            ..db_data
-                                        },
-                                    ));
-                                }
+                    // Go over every node in the database
+                    let db_nodes = nodes::table.load::<models::NodeQuery>(db)?;
+                    for db_node in db_nodes.into_iter() {
+                        let (id, db_data) = model_to_node_data(db_node);
+                        if let Some(cur_data) = cur_nodes_map.remove(&id) {
+                            // We already know this node.
+                            // Did it change?
+                            if cur_data != db_data {
+                                // Update in database
+                                diesel::update(nodes::table.find(id.as_str()))
+                                    .set((
+                                        nodes::name.eq(cur_data.name.as_str()),
+                                        nodes::online.eq(cur_data.online),
+                                    ))
+                                    .execute(db)?;
                             }
-                        }
-
-                        // Go over nodes remaining in the hash map -- they are not in the DB
-                        for (id, cur_data) in cur_nodes_map.into_iter() {
-                            // Insert into DB
-                            diesel::insert_into(nodes::table)
-                                .values(&models::Node {
-                                    id: id.as_str(),
-                                    name: cur_data.name.as_str(),
-                                    online: cur_data.online,
-                                })
-                                .execute(db)?;
-                            if cur_data.online {
-                                // The node is online, so it appearing is a change from the implicit offline
-                                // it was in when it did not exist.
+                            // Did its online status change?
+                            if cur_data.online != db_data.online {
                                 changed.push((id, cur_data));
                             }
+                        } else {
+                            // The node is in the DB but does not exist any more.
+                            diesel::delete(nodes::table.find(id.as_str())).execute(db)?;
+                            if db_data.online {
+                                // The node was online, so it being gone is a change to offline
+                                changed.push((
+                                    id,
+                                    NodeData {
+                                        online: false,
+                                        ..db_data
+                                    },
+                                ));
+                            }
                         }
-
-                        Ok(changed)
                     }
-                })
+
+                    // Go over nodes remaining in the hash map -- they are not in the DB
+                    for (id, cur_data) in cur_nodes_map.into_iter() {
+                        // Insert into DB
+                        diesel::insert_into(nodes::table)
+                            .values(&models::Node {
+                                id: id.as_str(),
+                                name: cur_data.name.as_str(),
+                                online: cur_data.online,
+                            })
+                            .execute(db)?;
+                        if cur_data.online {
+                            // The node is online, so it appearing is a change from the implicit offline
+                            // it was in when it did not exist.
+                            changed.push((id, cur_data));
+                        }
+                    }
+
+                    Ok(changed)
+                }
             })
             .await?;
 

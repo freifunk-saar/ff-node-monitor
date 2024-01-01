@@ -1,3 +1,5 @@
+use anyhow::Result;
+use diesel::{Connection, PgConnection};
 use diesel_migrations::MigrationHarness;
 
 use rocket::fairing::{AdHoc, Fairing};
@@ -20,4 +22,16 @@ pub fn migration() -> impl Fairing {
         .await;
         rocket
     })
+}
+
+impl DbConn {
+    pub async fn run_transaction<T>(
+        &self,
+        f: impl FnOnce(&mut PgConnection) -> Result<T> + Send + 'static,
+    ) -> Result<T>
+    where
+        T: Send + 'static,
+    {
+        self.run(move |db| db.transaction(f)).await
+    }
 }
